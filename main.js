@@ -194,7 +194,7 @@ function fsTick() {
   if (!winApi) return;
   const fg = winApi.foreground();
   if (fg && fg === hwnd) return;
-  const full = winApi.isFullscreenState(winApi.notificationState());
+  const full = winApi.fullscreenInFront(fg);
   if (!full) {
     fsOverride = false;
     if (autoHidden) { autoHidden = false; applyShown(); }
