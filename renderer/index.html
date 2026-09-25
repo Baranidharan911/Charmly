@@ -1422,8 +1422,8 @@ let FI_PEA=null;
 function fiPeacockTex(){
   const W=512,H=1024,cx=256,ey=800,barbs=[];
   const hw=yy=>{if(yy<540){const t=(yy-70)/470;return 50+150*Math.sin(Math.max(0,t)*PI*.5)}const q=(yy-ey+40)/250;return 205*Math.sqrt(Math.max(0,1-Math.min(1,q*q)))};
-  for(let yy=70;yy<1012;yy+=1.6)for(const s of [-1,1]){
-    const wisp=yy<560,keep=wisp?rnd()<.8:true;if(!keep)continue;
+  for(let yy=70;yy<1012;yy+=1.25)for(const s of [-1,1]){
+    const wisp=yy<560,keep=wisp?rnd()<.92:true;if(!keep)continue;
     let L=hw(yy)*(.9+rnd()*.16);if(L<6)continue;
     const dr=wisp?.55+rnd()*.25:.42;
     barbs.push({yy,s,L,dr,wav:wisp?(rnd()-.5)*30:(rnd()-.5)*5,wisp,c:rnd()});
@@ -1435,9 +1435,9 @@ function fiPeacockTex(){
     x.fillStyle=bump?'rgba(255,255,255,.45)':'#3f7a2a';x.beginPath();for(let yy=560;yy<=1000;yy+=4)x.lineTo(cx+hw(yy)*.86,yy+hw(yy)*.3);for(let yy=1000;yy>=560;yy-=4)x.lineTo(cx-hw(yy)*.86,yy+hw(yy)*.3);x.fill();
     for(const b of barbs){
       if(bump)x.strokeStyle=`rgba(255,255,255,${b.wisp?.8:.6})`;
-      else if(b.wisp)x.strokeStyle=`rgba(${120+b.c*70|0},${130+b.c*40|0},${30+b.c*25|0},${.8+b.c*.2})`;
+      else if(b.wisp){const gx=x.createLinearGradient(cx,b.yy,cx+b.s*b.L,b.yy+b.L*b.dr);gx.addColorStop(0,`rgb(${150+b.c*40|0},${112+b.c*30|0},${34})`);gx.addColorStop(.35,`rgb(${70+b.c*40|0},${120+b.c*30|0},${40})`);gx.addColorStop(.7,`rgb(${18+b.c*20|0},${110+b.c*40|0},${60+b.c*20|0})`);gx.addColorStop(1,`rgb(10,${58+b.c*20|0},${38})`);x.strokeStyle=gx}
       else x.strokeStyle=`rgb(${50+b.c*90|0},${110+b.c*60|0},${30+b.c*25|0})`;
-      x.lineWidth=b.wisp?2:2.4;path(x,b);x.stroke()}
+      x.lineWidth=b.wisp?2.3:2.4;path(x,b);x.stroke()}
     if(!bump){
       x.save();x.globalCompositeOperation='source-atop';
       for(const [rx,ry,yc,col] of eye){x.filter='blur(2.5px)';x.fillStyle=col;x.beginPath();x.ellipse(cx,yc,rx,ry,0,0,TAU);x.fill()}
@@ -1463,7 +1463,7 @@ function peacock(){
   const zf=(x,v)=>.13*Math.sin(PI*v*.9)-.16*(x/(W/2))**2*v+.02*Math.sin(v*9);
   for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),v=-yy/L;p.setXYZ(i,x+.07*v*v,yy+top,zf(x,v))}
   geo.computeVertexNormals();
-  const fm=mat({map:FI_PEA.map,bumpMap:FI_PEA.bump,bumpScale:.5,alphaTest:.35,transparent:true,side:THREE.DoubleSide,roughness:.42,metalness:.15,clearcoat:.6,clearcoatRoughness:.3,emissive:0xffffff,emissiveMap:FI_PEA.map,emissiveIntensity:.14},true);
+  const fm=mat({map:FI_PEA.map,bumpMap:FI_PEA.bump,bumpScale:.5,alphaTest:.35,transparent:true,side:THREE.DoubleSide,roughness:.3,metalness:.45,clearcoat:.7,clearcoatRoughness:.2,sheen:new THREE.Color(0x1f8a5a),emissive:0xffffff,emissiveMap:FI_PEA.map,emissiveIntensity:.12},true);
   g.add(new THREE.Mesh(geo,fm));
   const rp=[];for(let i=0;i<=16;i++){const v=i/16*.73;rp.push(new V3(.07*v*v,top-v*L+.12,zf(0,v)+.006))}
   g.add(tap(P(0xcdb888,{roughness:.35,clearcoat:.6}),rp,t=>.016*(1-t)+.003,48,8));
