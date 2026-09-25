@@ -1278,6 +1278,260 @@ function lantern(){
 //
 // @new-charms:B (add set B charm functions above this line)
 //
+/* ---------------- Sweet & Cute (set C) ---------------- */
+const SC_TINY=new THREE.SphereGeometry(1,8,5),SC_S=new THREE.SphereGeometry(1,22,15),SC_UP=new V3(0,1,0);shared.add(SC_TINY);shared.add(SC_S);
+const scSph=(m,r,x=0,y=0,z=0,sx=1,sy=1,sz=1)=>{const o=sph(m,r,x,y,z,sx,sy,sz),R=r*Math.max(sx,sy,sz);o.geometry=R>.3?SPH:R>.035?SC_S:SC_TINY;return o};
+function scTor(m,R,t,x=0,y=0,z=0,rx=0,ry=0,rz=0,arc=TAU){const o=new THREE.Mesh(new THREE.TorusGeometry(R,t,8,Math.max(12,Math.round(40*arc/TAU)),arc),m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o}
+let SCT=null,SCM=null;
+function scTex(){
+  if(SCT)return SCT;SCT={};
+  SCT.furB=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#808080';x.fillRect(0,0,w,h);x.lineCap='round';
+    for(let i=0;i<34000;i++){const px=rnd()*w,py=rnd()*h,a=rnd()*TAU,l=1.5+rnd()*4.5,v=rnd()<.5?0:255;x.strokeStyle=`rgba(${v},${v},${v},${(.08+rnd()*.16).toFixed(2)})`;x.lineWidth=.7+rnd()*.9;x.beginPath();x.moveTo(px,py);x.quadraticCurveTo(px+Math.cos(a+.9)*l*.6,py+Math.sin(a+.9)*l*.6,px+Math.cos(a)*l,py+Math.sin(a)*l);x.stroke()}{const c2=document.createElement('canvas');c2.width=w;c2.height=h;const y2=c2.getContext('2d');y2.filter='blur(.7px)';y2.drawImage(x.canvas,0,0);x.drawImage(c2,0,0)}},false,true);
+  SCT.furB.repeat.set(4,3);
+  SCT.furC=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);
+    for(let i=0;i<260;i++){x.fillStyle=`rgba(90,60,40,${(.03+rnd()*.06).toFixed(3)})`;x.beginPath();x.ellipse(rnd()*w,rnd()*h,6+rnd()*22,4+rnd()*12,rnd()*3,0,7);x.fill()}
+    for(let i=0;i<9000;i++){const v=rnd()<.7?'70,45,25':'255,235,210';x.strokeStyle=`rgba(${v},${(.03+rnd()*.06).toFixed(3)})`;x.lineWidth=1;const px=rnd()*w,py=rnd()*h,a=rnd()*TAU,l=2+rnd()*4;x.beginPath();x.moveTo(px,py);x.lineTo(px+Math.cos(a)*l,py+Math.sin(a)*l);x.stroke()}},true,true);
+  SCT.furC.repeat.set(3,2);
+  return SCT;
+}
+function scMats(){
+  if(SCM)return SCM;const t=scTex();SCM={};
+  SCM.rose=Mt(0xe9ad90,.22);SCM.roseSoft=Mt(0xcf9277,.34);
+  SCM.blush=P(0xf7d6d6,{roughness:.1,clearcoat:1,clearcoatRoughness:.04,sheen:new THREE.Color(0xffe0f0),envMapIntensity:1.7});
+  SCM.ink=P(0x0b0807,{roughness:.04,clearcoat:1,clearcoatRoughness:.02,envMapIntensity:1.6});
+  SCM.glint=new THREE.MeshBasicMaterial({color:0xffffff,toneMapped:false});
+  SCM.thread=mat({color:0x2a1a12,roughness:.45,sheen:new THREE.Color(0x7a5a48)},true);
+  SCM.stitchL=mat({color:0x6b4426,roughness:.6},true);
+  return SCM;
+}
+const scCap=(fin='rose')=>{const m=scMats(),mt=fin==='gold'?M.gold:m.rose;return{design:'beads',finish:fin,list:[[.055,mt],[.095,m.blush],[.055,mt]]}};
+function scPlush(c,sh){const t=scTex();return mat({color:c,roughness:.95,map:t.furC,bumpMap:t.furB,bumpScale:.07,envMapIntensity:.4,sheen:new THREE.Color(sh)},true)}
+function scSeg(m,a,b,r,geo=SC_TINY){const d=new V3().subVectors(b,a),l=d.length(),o=new THREE.Mesh(geo,m);o.position.copy(a).add(b).multiplyScalar(.5);o.scale.set(r,l/2+r*.3,r);o.quaternion.setFromUnitVectors(SC_UP,d.normalize());return o}
+function scMerge(list,m){const P=[],N=[];let n=0;for(const o of list){o.updateMatrix();const g=o.geometry.index?o.geometry.toNonIndexed():o.geometry.clone();g.applyMatrix4(o.matrix);P.push(g.attributes.position.array);N.push(g.attributes.normal.array);n+=g.attributes.position.array.length;g.dispose()}
+  const pa=new Float32Array(n),na=new Float32Array(n);let k=0;P.forEach((a,i)=>{pa.set(a,k);na.set(N[i],k);k+=a.length});
+  const geo=new THREE.BufferGeometry();geo.setAttribute('position',new THREE.BufferAttribute(pa,3));geo.setAttribute('normal',new THREE.BufferAttribute(na,3));return new THREE.Mesh(geo,m||list[0].material)}
+function scStitch(G,m,fn,n,r=.01,gap=.42){const L=[];for(let i=0;i<n;i++)L.push(scSeg(m,fn(i/n),fn((i+1-gap)/n),r));G.add(scMerge(L,m))}
+const scZ=(c,r,x,y,o=0)=>{const u=(x-c[0])/r[0],v=(y-c[1])/r[1];return c[2]+r[2]*Math.sqrt(Math.max(0,1-u*u-v*v))+o};
+function scEye(G,x,y,z,r,look,big){const m=scMats(),e=scSph(m.ink,r,x,y,z,1,1,.62);if(look)e.lookAt(look);G.add(e);
+  G.add(scSph(m.glint,r*.26,x-r*.34,y+r*.36,z+r*.52));if(big)G.add(scSph(m.glint,r*.12,x+r*.3,y-r*.32,z+r*.55));return e}
+
+/* teddy bear: mohair plush, embroidered nose, satin bow, stitched paw pads */
+function scTeddy(){
+  const g=new THREE.Group();let y=cap(g,scCap());const T=new THREE.Group();T.position.y=y+.04;g.add(T);const m=scMats();
+  const CB=0x9c5f32,CL=0xe3be90,fur=scPlush(CB,0xc08a60),furL=scPlush(CL,0xd0b090),fz=null,fzL=null;
+  const part=(mm,f,x,yy,z,sx,sy,sz)=>T.add(scSph(mm,1,x,yy,z,sx,sy,sz));
+  const hc=[0,-.48,0],hr=[.46,.41,.4];part(fur,fz,...hc,...hr);
+  [-1,1].forEach(s=>{part(fur,fz,s*.35,-.16,-.05,.16,.155,.095);T.add(scSph(furL,1,s*.345,-.175,.02,.1,.095,.05))});
+  const mc=[0,-.62,.26],mr=[.215,.165,.18];part(furL,fzL,...mc,...mr);
+  // embroidered satin-stitch nose
+  for(let i=0;i<8;i++){const yy=-.545-i*.0115,w=.088*(1-i/8*.82);const pts=[];for(let k=0;k<=6;k++){const xx=-w+2*w*k/6;pts.push(new V3(xx,yy,scZ(mc,mr,xx,yy,.006)))}T.add(tube(m.thread,pts,.0085,10,6))}
+  const nb=-.64,mz=(xx,yy)=>scZ(mc,mr,xx,yy,.004);
+  T.add(tube(m.thread,[new V3(0,-.63,mz(0,-.63)),new V3(0,-.665,mz(0,-.665))],.0065,4,5));
+  [-1,1].forEach(s=>T.add(tube(m.thread,[0,.03,.065,.095].map((u,k)=>new V3(s*u,-.665-Math.sin(k/3*PI)*.018+k*.004,mz(s*u,-.67))),.0065,12,5)));
+  // safety eyes
+  [-1,1].forEach(s=>{const ex=s*.165,ey=-.44,ez=scZ(hc,hr,ex,ey,-.012);scEye(T,ex,ey,ez,.055,null,true)});
+  // muzzle seam + head seam
+  scStitch(T,m.stitchL,t=>{const a=t*TAU,xx=Math.cos(a)*mr[0]*.9,yy=mc[1]+Math.sin(a)*mr[1]*.9;return new V3(xx,yy,scZ(mc,mr,xx,yy,.004))},26,.007);
+  scStitch(T,m.stitchL,t=>{const yy=-.1-t*.32;return new V3(0,yy,scZ(hc,hr,0,yy,.005))},9,.007);
+  // body
+  const bc=[0,-1.15,-.03],br=[.42,.49,.37];part(fur,fz,...bc,...br);
+  const pc=[0,-1.2,.25],pr=[.23,.27,.1];part(furL,null,...pc,...pr);
+  scStitch(T,m.stitchL,t=>{const a=t*TAU,xx=Math.cos(a)*pr[0]*.94,yy=pc[1]+Math.sin(a)*pr[1]*.94;return new V3(xx,yy,Math.max(scZ(pc,pr,xx,yy,.004),scZ(bc,br,xx,yy,.004)))},30,.007);
+  // arms
+  [-1,1].forEach(s=>{const pts=[new V3(s*.3,-.93,.02),new V3(s*.45,-1.08,.1),new V3(s*.5,-1.26,.2)];
+    T.add(tap(fur,pts,t=>.135-t*.02,20,20));part(fur,fz,s*.5,-1.27,.2,.12,.12,.12);
+    T.add(scSph(furL,1,s*.52,-1.3,.29,.075,.075,.04))});
+  // legs + foot pads
+  [-1,1].forEach(s=>{part(fur,fz,s*.23,-1.5,.1,.19,.17,.24);part(fur,fz,s*.28,-1.58,.32,.16,.16,.15);
+    const fc=[s*.285,-1.585,.43],fr=[.115,.125,.05];T.add(scSph(furL,1,...fc,...fr));
+    scStitch(T,m.stitchL,t=>{const a=t*TAU;return new V3(fc[0]+Math.cos(a)*fr[0]*.86,fc[1]+Math.sin(a)*fr[1]*.86,fc[2]+fr[2]*.5+.004)},16,.0065)});
+  // satin bow
+  const sat=P(0xe9507d,{roughness:.28,clearcoat:.6,clearcoatRoughness:.25,sheen:new THREE.Color(0xffc0d4)});
+  const band=scTor(sat,.335,.034,0,-.87,-.02,PI/2);band.scale.set(1,.98,1);T.add(band);
+  const lp=new THREE.Shape();lp.moveTo(0,0);lp.bezierCurveTo(.06,.13,.25,.15,.25,.02);lp.bezierCurveTo(.25,-.1,.07,-.1,0,0);
+  [-1,1].forEach(s=>{const l=ext(sat,lp,.02,.028,.022,4,24);l.position.set(0,-.86,.37);l.rotation.set(0,s*.25,s<0?PI:0);if(s<0)l.scale.y=-1;T.add(l);
+    const tl=new THREE.Shape();tl.moveTo(0,0);tl.lineTo(.07,-.02);tl.lineTo(.1,-.2);tl.lineTo(.065,-.17);tl.lineTo(.03,-.2);tl.lineTo(-.01,-.03);
+    const tt=ext(sat,tl,.012,.01,.008,2,8);tt.position.set(s*.015,-.88,.39);tt.scale.x=s;tt.rotation.z=s*.12;T.add(tt)});
+  T.add(scSph(sat,.055,0,-.865,.405,1,.9,.7));
+  return g;
+}
+
+/* heart locket: domed polished gold, engraved flourish, bezel-set stone, hinge + clasp */
+let SC_HR=null,SC_ENG=null;
+function scHeartR(){
+  if(SC_HR)return SC_HR;const S=[],B=720,tab=new Float32Array(B+1);
+  for(let i=0;i<2000;i++){const t=i/2000*TAU,X=16*Math.pow(Math.sin(t),3),Y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)+1.5;S.push([Math.atan2(X,Y),Math.hypot(X,Y)/17])}
+  for(let b=0;b<=B;b++){const a=-PI+b/B*TAU;let best=1e9,r=0;for(const s of S){let d=Math.abs(s[0]-a);d=Math.min(d,TAU-d);if(d<best){best=d;r=s[1]}}tab[b]=r}
+  const sm=new Float32Array(B+1),W=110;for(let b=0;b<=B;b++){let a=0,n=0;for(let k=-W;k<=W;k++){const w=Math.cos(k/W*PI/2);a+=tab[((b+k)%B+B)%B]*w;n+=w}sm[b]=a/n}
+  const lk=(T,u)=>{const i=Math.floor(u),f=u-i;return T[i]*(1-f)+T[i+1]*f};
+  SC_HR=(phi,rho=1)=>{let u=(phi+PI)/TAU*B;u=((u%B)+B)%B;const e=lk(tab,u);if(rho>=1)return e;const q=Math.pow(rho,4);return lk(sm,u)*(1-q)+e*q};return SC_HR;
+}
+function scEngrave(){
+  if(SC_ENG)return SC_ENG;const R=scHeartR();
+  const draw=(x,w,base,ink)=>{x.fillStyle=base;x.fillRect(0,0,w,w);const X=u=>(u/2+.5)*w,Y=v=>(1-(v/2+.5))*w;x.strokeStyle=ink;x.fillStyle=ink;x.lineCap=x.lineJoin='round';
+    const hp=(k)=>{x.beginPath();for(let i=0;i<=240;i++){const a=-PI+i/240*TAU,r=R(a)*k;const px=X(Math.sin(a)*r),py=Y(Math.cos(a)*r);i?x.lineTo(px,py):x.moveTo(px,py)}x.closePath()};
+    x.lineWidth=w*.007;hp(.86);x.stroke();x.lineWidth=w*.003;hp(.81);x.stroke();
+    for(let i=0;i<120;i++){const a=-PI+i/120*TAU,r=R(a)*.835;x.beginPath();x.arc(X(Math.sin(a)*r),Y(Math.cos(a)*r),w*.0028,0,7);x.fill()}
+    const spiral=(cx,cy,r0,turns,dir)=>{x.beginPath();for(let i=0;i<=60;i++){const t=i/60,a=dir*t*turns*TAU,r=r0*(1-t*.85);const px=X(cx+Math.cos(a)*r),py=Y(cy+Math.sin(a)*r);i?x.lineTo(px,py):x.moveTo(px,py)}x.stroke()};
+    const leaf=(cx,cy,ang,l)=>{x.save();x.translate(X(cx),Y(cy));x.rotate(-ang);x.beginPath();x.moveTo(0,0);x.quadraticCurveTo(l*w*.3,-l*w*.22,l*w*.6,0);x.quadraticCurveTo(l*w*.3,l*w*.22,0,0);x.stroke();x.beginPath();x.moveTo(0,0);x.lineTo(l*w*.5,0);x.stroke();x.restore()};
+    x.lineWidth=w*.006;
+    [-1,1].forEach(s=>{
+      x.beginPath();x.moveTo(X(0),Y(-.52));x.bezierCurveTo(X(s*.18),Y(-.46),X(s*.2),Y(-.2),X(s*.34),Y(-.12));x.bezierCurveTo(X(s*.5),Y(-.04),X(s*.56),Y(.16),X(s*.44),Y(.24));x.stroke();
+      spiral(s*.4,.19,.06,1.3,-s);
+      x.beginPath();x.moveTo(X(s*.12),Y(-.37));x.bezierCurveTo(X(s*.26),Y(-.4),X(s*.36),Y(-.34),X(s*.38),Y(-.26));x.stroke();spiral(s*.35,-.27,.035,1.2,s);
+      x.beginPath();x.moveTo(X(s*.3),Y(-.1));x.bezierCurveTo(X(s*.18),Y(.02),X(s*.16),Y(.2),X(s*.26),Y(.34));x.stroke();spiral(s*.3,.36,.04,1.2,s);
+      leaf(s*.46,.02,s>0?.9:PI-.9,.08);leaf(s*.2,-.28,s>0?-.6:PI+.6,.07);leaf(s*.22,.16,s>0?2.0:PI-2.0,.06);leaf(s*.5,.36,s>0?.3:PI-.3,.06);
+    });
+    x.lineWidth=w*.005;x.beginPath();x.arc(X(0),Y(.1),w*.06,0,7);x.stroke();
+    for(let i=0;i<8;i++){const a=i/8*TAU;leaf(Math.cos(a)*.09,.1+Math.sin(a)*.09,a,.045)}
+    x.beginPath();x.moveTo(X(0),Y(-.52));x.lineTo(X(0),Y(-.62));x.stroke();spiral(0,-.66,.03,1.1,1);
+  };
+  SC_ENG={map:canvasTex(1024,1024,(x,w)=>draw(x,w,'#ffffff','#a88040'),true),bump:canvasTex(1024,1024,(x,w)=>{draw(x,w,'#ffffff','#000000')})};
+  return SC_ENG;
+}
+function scLocket(){
+  const g=new THREE.Group();let y=cap(g,scCap('gold'));const R=scHeartR(),E=scEngrave();
+  const S=.78,D=.2,top=R(0)*S,oy=y-.2-top,L=new THREE.Group();L.position.y=oy;g.add(L);
+  const gold=Mt(0xe8b45a,.24,{map:E.map,bumpMap:E.bump,bumpScale:.9}),rim=Mt(0xb98535,.3);
+  const geo=new THREE.SphereGeometry(1,112,60);geo.rotateX(PI/2);const p=geo.attributes.position,uv=geo.attributes.uv;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),z=p.getZ(i),rho=Math.hypot(x,yy),phi=Math.atan2(x,yy),r=R(phi,rho);
+    const X=x*r*S,Y=yy*r*S,tip=Math.max(0,-Math.cos(phi))**6*rho*rho,Z=Math.sign(z)*D*Math.pow(Math.abs(z),.62)*(1-.45*tip);
+    p.setXYZ(i,X,Y,Z);uv.setXY(i,(z>=0?X:-X)/S/2+.5,Y/S/2+.5)}
+  geo.computeVertexNormals();L.add(new THREE.Mesh(geo,gold));
+  const hz=(X,Y)=>{const phi=Math.atan2(X,Y);let rho=.5;for(let k=0;k<6;k++)rho=Math.min(1,Math.hypot(X,Y)/(R(phi,rho)*S));return D*Math.pow(Math.sqrt(1-rho*rho),.62)};
+  const edge=[];for(let i=0;i<=160;i++){const a=-PI+i/160*TAU,r=R(a)*S*1.004;edge.push(new V3(Math.sin(a)*r,Math.cos(a)*r,0))}
+  L.add(tube(rim,edge,.016,200,7,true));
+  // hinge on the left, clasp tab on the right
+  const ha=-1.72,hr=R(ha)*S,hx=Math.sin(ha)*hr,hy=Math.cos(ha)*hr;
+  for(let k=-1;k<=1;k++){const c=new THREE.Mesh(new THREE.CylinderGeometry(.026,.026,.055,20),k?M.gold:rim);c.position.set(hx+.004,hy+k*.058,0);L.add(c)}
+  const ca=1.62,cr=R(ca)*S;L.add(scSph(M.gold,.03,Math.sin(ca)*cr+.022,Math.cos(ca)*cr,0,.9,1.3,1.1));
+  // bezel-set pink stone
+  const gz=hz(0,.1*S),stone=P(0xff4f8e,{roughness:0,clearcoat:1,clearcoatRoughness:0,flatShading:true,envMapIntensity:3.2,transparent:true,opacity:.92});
+  const gem=lathe(stone,[[.001,-.07],[.075,.0],[.085,.018],[.05,.045],[.001,.045]],12);gem.rotation.x=PI/2;gem.position.set(0,.1*S,gz+.01);L.add(gem);
+  L.add(scTor(M.gold,.088,.018,0,.1*S,gz+.01));
+  for(let i=0;i<4;i++){const a=PI/4+i*PI/2;L.add(scSph(M.gold,.017,Math.cos(a)*.085,.1*S+Math.sin(a)*.085,gz+.035))}
+  // soldered loop + jump ring
+  L.add(scTor(M.gold,.06,.018,0,top+.04,0));L.add(scTor(M.gold,.075,.018,0,top+.14,0,0,PI/2));
+  return g;
+}
+
+/* rubber duck: glossy vinyl, one-piece body with upturned tail */
+function scDuck(){
+  const g=new THREE.Group();let y=cap(g,scCap());const D=new THREE.Group();D.position.y=y+.02;D.rotation.y=-.28;g.add(D);const m=scMats();
+  const yel=P(0xffc414,{roughness:.14,clearcoat:1,clearcoatRoughness:.05}),org=P(0xff6a0a,{roughness:.18,clearcoat:1,clearcoatRoughness:.06});
+  const bg=new THREE.SphereGeometry(1,64,40),p=bg.attributes.position;
+  for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),z=p.getZ(i),s=Math.max(0,-x),k=Math.pow(s,2.4),f=Math.max(0,x);
+    let X=x*.7-.14*k,Y=yy*.44*(1-.62*k)+.5*k+.06*f*f*(yy+1),Z=z*.56*(1-.66*k)*(1+.06*f);
+    if(Y<-.3)Y=-.3-(-.3-Y)*.3;p.setXYZ(i,X,Y,Z)}
+  bg.computeVertexNormals();const body=new THREE.Mesh(bg,yel);body.position.set(-.2,-1.02,0);D.add(body);
+  const hc=new V3(0,-.37,0),hr=.35;D.add(scSph(yel,hr,hc.x,hc.y,hc.z));D.add(scSph(yel,.24,.03,-.62,0,1,1,1.05));
+  // cheeks + beak
+  D.add(scSph(org,.2,.33,-.43,0,1,.3,.78));D.add(scSph(org,.17,.3,-.49,0,1,.26,.66));
+  D.add(scSph(P(0x8a2a05,{roughness:.4}),.15,.3,-.463,0,1,.08,.62));
+  [-1,1].forEach(s=>{const n=new V3(.58,.3,s*.62).normalize(),pos=hc.clone().addScaledVector(n,hr-.012);
+    const e=scSph(m.ink,.058,pos.x,pos.y,pos.z,1,1.25,.55);e.lookAt(hc.clone().addScaledVector(n,3));D.add(e);
+    const gl=pos.clone().addScaledVector(n,.03);gl.y+=.026;gl.x-=.004;D.add(scSph(m.glint,.016,gl.x,gl.y,gl.z));
+    // wing
+    const ws=new THREE.Shape();ws.moveTo(.2,0);ws.bezierCurveTo(.2,.17,-.1,.2,-.3,.13);ws.lineTo(-.25,.09);ws.lineTo(-.33,.06);ws.lineTo(-.26,.02);ws.bezierCurveTo(-.15,-.1,.2,-.14,.2,0);
+    const w=ext(yel,ws,.01,.05,.03,6,40);w.scale.set(1.12,1.15,s);w.position.set(-.1,-.97,s*.5);w.rotation.set(0,-.28*s,.14);D.add(w)});
+  return g;
+}
+
+/* cupcake: pleated paper liner, piped star-tip swirl, sprinkles, glacé cherry */
+function scRidgeTube(pts,rf,seg,rad,n,amp){const curve=new THREE.CatmullRomCurve3(pts);const geo=taper(curve,rf,seg,rad);const p=geo.attributes.position,Q=new V3();
+  for(let i=0;i<=seg;i++){curve.getPointAt(i/seg,Q);for(let j=0;j<=rad;j++){const k=i*(rad+1)+j,f=1+amp*Math.cos(j/rad*TAU*n);p.setXYZ(k,Q.x+(p.getX(k)-Q.x)*f,Q.y+(p.getY(k)-Q.y)*f,Q.z+(p.getZ(k)-Q.z)*f)}}
+  p.needsUpdate=true;geo.computeVertexNormals();return{geo,curve}}
+let SC_LINER=null;
+function scCupcake(){
+  const g=new THREE.Group();let y=cap(g,scCap());const C=new THREE.Group();C.position.y=y;g.add(C);const m=scMats();
+  SC_LINER=SC_LINER||canvasTex(512,64,(x,w,h)=>{for(let i=0;i<14;i++){x.fillStyle='#9fdcca';x.fillRect(i*w/14,0,w/28,h);x.fillStyle='#fff8ec';x.fillRect(i*w/14+w/28,0,w/28,h)}},true,true);
+  const paper=mat({color:0xffffff,map:SC_LINER,roughness:.62,side:THREE.DoubleSide,sheen:new THREE.Color(0x505050)},true);
+  const lg=new THREE.CylinderGeometry(.57,.42,.56,168,4,true),lp=lg.attributes.position;
+  for(let i=0;i<lp.count;i++){const x=lp.getX(i),z=lp.getZ(i),a=Math.atan2(z,x),f=1+.038*Math.abs(Math.cos(a*14));lp.setX(i,x*f);lp.setZ(i,z*f)}
+  lg.computeVertexNormals();C.add(at(new THREE.Mesh(lg,paper),0,-1.44));
+  const bd=new THREE.CircleGeometry(.43,48);bd.rotateX(PI/2);C.add(at(new THREE.Mesh(bd,paper),0,-1.72));
+  const crumb=P(0xb87a40,{roughness:.85,clearcoat:0,bumpMap:noiseTex,bumpScale:.03});C.add(scSph(crumb,1,0,-1.15,0,.6,.14,.6));
+  const icing=P(0xf48aaf,{roughness:.36,clearcoat:.45,clearcoatRoughness:.35,sheen:new THREE.Color(0xffd6e6)});
+  const pts=[];const N=110;for(let i=0;i<=N;i++){const t=i/N,a=t*TAU*3,r=.44*Math.pow(1-t,.8)+.012;pts.push(new V3(Math.cos(a)*r,-1.07+.62*Math.pow(t,1.1),Math.sin(a)*r))}
+  pts.push(new V3(0,-.38,0));
+  const rf=t=>t<.03?.12+.07*t/.03:t>.9?.19*(1-.62*((t-.03)/.97))*(1-(t-.9)/.1*.85):.19*(1-.62*((t-.03)/.97));
+  const {geo,curve}=scRidgeTube(pts,rf,200,40,8,.2);C.add(new THREE.Mesh(geo,icing));
+  // sprinkles
+  const cols=[0xffffff,0xffd24a,0x6cc0ff,0xb88cff,0x7fdcaa,0xff6f91].map(c=>P(c,{roughness:.25,clearcoat:.8}));
+  const Q=new V3(),SPR=cols.map(()=>[]);for(let i=0;i<95;i++){const t=.04+rnd()*.83;curve.getPointAt(t,Q);const out=new V3(Q.x,0,Q.z).normalize().multiplyScalar(.7+rnd()*.5);out.y=.35+rnd()*.9;out.normalize();
+    const r=rf(t)*.97,c=Q.clone().addScaledVector(out,r),tan=new V3(rnd()-.5,rnd()-.5,rnd()-.5).cross(out).normalize().multiplyScalar(.03);
+    SPR[i%cols.length].push(scSeg(cols[i%cols.length],c.clone().sub(tan),c.clone().add(tan),.011))}
+  SPR.forEach((l,i)=>C.add(scMerge(l,cols[i])));
+  // glacé cherry
+  const cher=P(0xc0001e,{roughness:.06,clearcoat:1,clearcoatRoughness:.03,envMapIntensity:1.5});
+  C.add(lathe(cher,(()=>{const pr=[];for(let i=0;i<=30;i++){const a=-PI/2+i/30*PI;pr.push([Math.cos(a)*.14*(1+.05*Math.sin(a*2)),Math.sin(a)*.13-(a>1.1?(a-1.1)*.05:0)])}return pr})(),48,-.39));
+  C.add(tap(M.stalk,[new V3(0,-.28,0),new V3(.02,-.16,0),new V3(0,-.02,0)],t=>.018-t*.006,12,8));
+  return g;
+}
+
+/* butterfly: plique-a-jour enamel wings in rose-gold filigree frame */
+let SC_WING=null;
+function scButterfly(){
+  const g=new THREE.Group();let y=cap(g,scCap());const B=new THREE.Group();B.position.y=y-.02;g.add(B);const m=scMats(),rg=m.rose;
+  const fore=[[.05,.02],[.22,.27],[.5,.5],[.8,.6],[.93,.52],[.9,.3],[.74,.06],[.45,-.05],[.12,-.05]],hind=[[.06,-.07],[.33,-.1],[.6,-.22],[.7,-.43],[.6,-.64],[.38,-.71],[.2,-.6],[.08,-.34]];
+  SC_WING=SC_WING||canvasTex(1024,1024,(x,w,h)=>{const X=u=>u*w,Y=v=>(1-(v+.8)/1.5)*h;
+    const gr=x.createRadialGradient(X(.02),Y(-.05),0,X(.02),Y(-.05),w*.95);gr.addColorStop(0,'#9c0c46');gr.addColorStop(.3,'#e0306f');gr.addColorStop(.58,'#f26a9e');gr.addColorStop(.78,'#e493cf');gr.addColorStop(.9,'#9a52cc');gr.addColorStop(1,'#46207f');
+    x.fillStyle=gr;x.fillRect(0,0,w,h);
+    x.fillStyle='rgba(255,255,255,.9)';[[.78,.5],[.86,.44],[.88,.34],[.66,.53],[.58,-.52],[.5,-.64],[.64,-.4]].forEach(([u,v])=>{x.beginPath();x.arc(X(u),Y(v),w*.012,0,7);x.fill()});
+    x.globalAlpha=.25;for(let i=0;i<600;i++){x.fillStyle=rnd()<.5?'#ffffff':'#ffd0f0';x.fillRect(rnd()*w,rnd()*h,2,2)}x.globalAlpha=1},true);
+  const wing=P(0xffffff,{map:SC_WING,roughness:.06,clearcoat:1,clearcoatRoughness:.03,transparent:true,opacity:.84,side:THREE.DoubleSide,depthWrite:false,envMapIntensity:1.6});
+  const mk=(pts)=>{const s=new THREE.Shape();s.moveTo(...pts[0]);s.splineThru([...pts.slice(1),pts[0]].map(q=>new V2(q[0],q[1])));const geo=new THREE.ShapeGeometry(s,40),uv=geo.attributes.uv,pp=geo.attributes.position;for(let i=0;i<uv.count;i++)uv.setXY(i,pp.getX(i),(pp.getY(i)+.8)/1.5);return{s,geo}};
+  const F=mk(fore),H=mk(hind);
+  const veins=[[[.06,0],[.3,.28],[.62,.5]],[[.06,0],[.45,.3],[.85,.5]],[[.06,0],[.5,.18],[.9,.3]],[[.06,-.01],[.45,.05],[.74,.06]],[[.07,-.08],[.35,-.2],[.66,-.34]],[[.07,-.08],[.3,-.35],[.58,-.62]],[[.07,-.1],[.2,-.4],[.3,-.66]]];
+  [-1,1].forEach(s=>{const W=new THREE.Group();W.position.set(s*.02,-.3,-.02);W.scale.x=s;W.rotation.y=s*-.32;B.add(W);
+    [F,H].forEach(({s:sh,geo})=>{const w=new THREE.Mesh(geo,wing);w.renderOrder=3;W.add(w);
+      W.add(tube(rg,sh.getSpacedPoints(90).map(q=>new V3(q.x,q.y,0)),.02,150,7,true))});
+    veins.forEach(v=>W.add(tap(rg,v.map(q=>new V3(q[0],q[1],.004)),t=>.011*(1-t*.5),20,6)));
+    // antenna
+    B.add(tap(rg,[new V3(s*.02,-.05,.03),new V3(s*.1,.02,.05),new V3(s*.2,.07,.04),new V3(s*.3,.08,.02)],t=>.011-t*.004,20,6));B.add(scSph(rg,.03,s*.3,.08,.02));
+    B.add(scSph(m.ink,.022,s*.045,-.1,.05))});
+  // body
+  B.add(scSph(rg,.07,0,-.1,0));B.add(scSph(rg,1,0,-.28,0,.075,.14,.08));
+  const stone=P(0xff5a96,{roughness:0,clearcoat:1,clearcoatRoughness:0,flatShading:true,envMapIntensity:3,transparent:true,opacity:.92});
+  const gem=lathe(stone,[[.001,-.05],[.05,0],[.056,.012],[.034,.03],[.001,.03]],10);gem.rotation.x=PI/2;gem.position.set(0,-.27,.075);B.add(gem);B.add(scTor(rg,.058,.01,0,-.27,.08));
+  for(let i=0;i<7;i++){const r=.066-i*.0065;B.add(scSph(rg,r,0,-.44-i*.078,0,1,.85,1));if(i<6)B.add(scTor(m.roseSoft,r*.7,.006,0,-.48-i*.078,0,PI/2))}
+  return g;
+}
+
+/* bunny: soft-touch designer vinyl, lop ear, holding a carrot, toe beans */
+function scBunny(){
+  const g=new THREE.Group();let y=cap(g,scCap());const B=new THREE.Group();B.position.y=y+.02;g.add(B);const m=scMats();
+  const cream=P(0xfbf1e6,{roughness:.42,clearcoat:.45,clearcoatRoughness:.35,sheen:new THREE.Color(0xfff0ea)}),pink=P(0xf5a1b5,{roughness:.4,clearcoat:.5,clearcoatRoughness:.3});
+  const blush=P(0xff8fab,{roughness:.6,transparent:true,opacity:.45,depthWrite:false});
+  const hc=[0,-.4,.03],hr=[.4,.35,.36];B.add(scSph(cream,1,...hc,...hr));
+  // ears: left upright, right lop
+  const ear=(pts,z,s)=>{const o=tap(cream,pts,t=>.115*Math.pow(Math.sin(Math.min(1,t*1.15+.12)*PI*.5+ .0),1)*(1-t*t*.8)+.01,40,20);o.scale.z=.42;o.position.z=z;B.add(o);
+    const i=tap(pink,pts.map((q,k)=>q.clone().add(new V3(0,0,0))),t=>(.115*(1-t*t*.8))*.55*(t<.08?t/.08:1)+.004,40,14);i.scale.z=.3;i.position.z=z+.035;B.add(i)};
+  ear([new V3(-.13,-.1,0),new V3(-.2,.12,0),new V3(-.28,.36,0),new V3(-.36,.5,0)],-.02);
+  ear([new V3(.13,-.1,0),new V3(.24,.1,0),new V3(.42,.14,0),new V3(.56,.0,0),new V3(.6,-.16,0)],-.02);
+  // face
+  [-1,1].forEach(s=>{const ex=s*.155,ey=-.37;scEye(B,ex,ey,scZ(hc,hr,ex,ey,-.014),.06,null,true);
+    B.add(scSph(blush,1,s*.26,-.49,scZ(hc,hr,s*.26,-.49,-.012),.075,.045,.02))});
+  B.add(scSph(pink,1,0,-.47,scZ(hc,hr,0,-.47,-.006),.038,.026,.02));
+  const mz=(xx,yy)=>scZ(hc,hr,xx,yy,.003);
+  B.add(tube(m.thread,[new V3(0,-.49,mz(0,-.49)),new V3(0,-.515,mz(0,-.515))],.0055,4,5));
+  [-1,1].forEach(s=>B.add(tube(m.thread,[0,.022,.045,.06].map((u,k)=>new V3(s*u,-.515-Math.sin(k/3*PI)*.016+k*.003,mz(s*u,-.52))),.0055,12,5)));
+  // body
+  const bc=[0,-1.0,0],br=[.44,.44,.4];B.add(scSph(cream,1,...bc,...br));
+  // carrot
+  const car=P(0xff7a1c,{roughness:.35,clearcoat:.6}),carD=P(0xd9560c,{roughness:.5});const cp=[new V3(-.22,-.7,.42),new V3(-.02,-.84,.47),new V3(.18,-1.02,.44)];
+  B.add(tap(car,cp,t=>.075*(1-t*.88)+.006,24,16));
+  const cc=new THREE.CatmullRomCurve3(cp),Q=new V3(),T=new V3();for(let k=1;k<5;k++){const t=k/5.5;cc.getPointAt(t,Q);cc.getTangentAt(t,T);const r=scTor(carD,.075*(1-t*.88)+.002,.0035,Q.x,Q.y,Q.z,0,0,0,PI*1.1);r.quaternion.setFromUnitVectors(new V3(0,0,1),T);r.rotateZ(PI*.5);B.add(r)}
+  const lf=P(0x49a83a,{roughness:.35,clearcoat:.5});[[-.36,-.56],[-.4,-.64],[-.32,-.52]].forEach(([xx,yy],k)=>B.add(tap(lf,[new V3(-.22,-.7,.42),new V3((xx-.22)/2-.02,(yy-.7)/2+.02,.43),new V3(xx,yy,.42+k*.01)],t=>.028*(1-t)+.006,12,8)));
+  // arms + paws holding carrot
+  [-1,1].forEach(s=>{B.add(tap(cream,[new V3(s*.3,-.76,.2),new V3(s*.31,-.9,.34),new V3(s*.15,-.9,.46)],t=>.095-t*.015,16,16));B.add(scSph(cream,.095,s*.12,-.86,.47,1,.9,.8))});
+  // feet with toe beans
+  [-1,1].forEach(s=>{const fc=[s*.24,-1.35,.26],fr=[.16,.12,.2];B.add(scSph(cream,1,...fc,...fr));const fz=fc[2]+fr[2]-.006;
+    B.add(scSph(pink,1,fc[0],-1.38,fz,.06,.045,.02));[-1,0,1].forEach(k=>B.add(scSph(pink,1,fc[0]+k*.055,-1.3+Math.abs(k)*.012,fz-Math.abs(k)*.01,.024,.022,.015)))});
+  // cotton tail
+  const t=scTex();B.add(scSph(scPlush(0xfff8f0,0xffffff),.14,0,-1.2,-.4));
+  return g;
+}
 // @new-charms:C (add set C charm functions above this line)
 //
 // @new-charms:D (add set D charm functions above this line)
@@ -1293,6 +1547,7 @@ const COLLECTIONS=[
   //
   // @collection:B (add set B collection entry above this line)
   //
+  {name:'Sweet & Cute',items:[['teddy','Teddy bear',scTeddy],['locket','Heart locket',scLocket],['rubberduck','Rubber duck',scDuck],['cupcake','Cupcake',scCupcake],['butterfly','Butterfly',scButterfly],['bunny','Bunny',scBunny]]},
   // @collection:C (add set C collection entry above this line)
   //
   // @collection:D (add set D collection entry above this line)
