@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Charm Line</title>
+<title>Charm Line · Little luck, on a line</title>
 <meta name="description" content="Little luck, on a line. Real 3D charms that hang from the top of your screen and sway with real physics. Free for Windows, Mac and Linux.">
 <meta name="theme-color" content="#f3ecdf">
 <link rel="canonical" href="https://luckonaline.netlify.app/">
@@ -84,7 +84,9 @@ h3{font-size:24px;line-height:1.15}
 .ltools button:hover{background:var(--paper2);color:var(--ink)}
 .ltools button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .ltools .sep{width:1px;height:18px;background:var(--rule);margin:0 4px}
-@media (max-width:720px){.hint{left:16px;bottom:64px}.ltools{left:16px;right:16px;justify-content:center;overflow-x:auto}.ltools button{padding:0 10px}}
+.ltools .luck{font-family:var(--mono);font-size:12px;letter-spacing:.06em;text-transform:uppercase;color:var(--ink2);padding:0 12px 0 6px;white-space:nowrap}
+.ltools .luck b{color:var(--red);font-weight:500}
+@media (max-width:720px){.ltools .luck{display:none}.hint{left:16px;bottom:64px}.ltools{left:16px;right:16px;justify-content:center;overflow-x:auto}.ltools button{padding:0 10px}}
 
 .hero-copy{display:grid;grid-template-columns:1.25fr .75fr;gap:48px;align-items:end;padding-top:30px;padding-bottom:40px}
 .kicker{color:var(--muted);margin:0 0 18px;display:flex;gap:14px;flex-wrap:wrap}
@@ -102,6 +104,7 @@ h1 .u svg{position:absolute;left:-2%;bottom:-.14em;width:104%;height:.3em;overfl
 .ticker .run{display:flex;width:max-content;animation:run 90s linear infinite}
 .ticker span{padding:14px 0;white-space:nowrap;color:var(--ink2)}
 .ticker span i{font-style:normal;color:var(--red);margin:0 22px}
+.ticker em{font:italic 400 19px/1 var(--serif);font-variation-settings:"SOFT" 100,"WONK" 1;text-transform:none;letter-spacing:0;color:var(--red);align-self:center;white-space:nowrap}
 @keyframes run{to{transform:translateX(-50%)}}
 
 /* sections */
@@ -230,15 +233,16 @@ section{padding:120px 0 0}
 
 /* footer */
 footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
-.big{position:relative;padding:40px 0 30px;overflow:hidden}
-.big h2{font-size:clamp(78px,17.5vw,260px);line-height:.8;letter-spacing:-.05em;font-weight:450;white-space:nowrap;position:relative}
-.big .strand{position:absolute;left:0;top:34%;width:100%;height:120px;pointer-events:none;z-index:1}
-.big .dangle{position:absolute;z-index:2;top:calc(34% + 64px);right:15%;width:84px;transform-origin:50% -40px;animation:sway 4s ease-in-out infinite}
-.big .dangle::before{content:"";position:absolute;left:50%;top:-40px;height:44px;width:1.5px;background:var(--thread)}
+.big{position:relative;padding:40px 0 190px;overflow:hidden}
+.big h2{font-size:clamp(60px,13.2vw,196px);line-height:.8;letter-spacing:-.05em;font-weight:450;white-space:nowrap;position:relative;z-index:2}
+.big .strand{position:absolute;left:0;bottom:90px;width:100%;height:120px;pointer-events:none;z-index:1}
+/* hangs from the lowest point of the cord (136px above the bottom of .big) */
+.big .dangle{position:absolute;z-index:2;top:calc(100% - 138px);left:50%;width:84px;margin-left:-42px;padding-top:22px;transform-origin:50% 0;animation:sway 4s ease-in-out infinite}
+.big .dangle::before{content:"";position:absolute;left:50%;top:0;height:26px;width:1.5px;background:var(--thread)}
 .frow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;margin-top:30px;padding-top:22px;border-top:1px solid var(--rule);color:var(--muted)}
 .frow nav{display:flex;gap:22px;flex-wrap:wrap}
 .frow a{text-decoration:none}.frow a:hover{color:var(--red)}
-@media (max-width:640px){.big .dangle{right:6%;width:56px;top:calc(34% + 30px)}}
+@media (max-width:640px){.big{padding-bottom:170px}.big .dangle{width:60px;margin-left:-30px}}
 
 .rv{opacity:0;transform:translateY(22px);transition:opacity .8s ease,transform .8s cubic-bezier(.2,.7,.2,1)}
 .rv.in{opacity:1;transform:none}
@@ -278,6 +282,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
         <span class="sep"></span>
         <button data-act="nudge">Nudge</button>
         <button data-act="clear">Clear</button>
+        <span class="sep"></span>
+        <span class="luck" aria-live="polite">Luck on the line: <b id="luckN">8</b></span>
       </div>
     </div>
 
@@ -299,8 +305,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="catalogue">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">No. 01 · The catalogue</span>
-        <div><h2><span data-count>57</span> small things <i>worth keeping.</i></h2><p>Every charm is built in real 3D, with its own cap, bead and weight. Tap any one to hang it on the line at the top of this page.</p></div>
+        <span class="no mono">Line 01 · The catalogue</span>
+        <div><h2><span data-count>57</span> kinds of luck, <i>ready to hang.</i></h2><p>A lucky eye, a temple bell, a cup of filter coffee. Every charm is built in real 3D, with its own cap, bead and weight. Tap any one to hang it on the line at the top of this page.</p></div>
       </div>
       <div class="filters rv" id="filters" role="toolbar" aria-label="Filter by collection"></div>
       <div class="grid" id="grid"></div>
@@ -310,8 +316,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="behaves">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">No. 02 · How it behaves</span>
-        <div><h2>Made to feel like something <i>you could hold.</i></h2></div>
+        <span class="no mono">Line 02 · How it behaves</span>
+        <div><h2>Every bit of luck <i>has weight.</i></h2></div>
       </div>
       <div class="behave">
         <div class="notes">
@@ -321,7 +327,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
           <div class="note rv"><img src="/assets/charms/kitsune.webp" alt="" loading="lazy"><h3>It lives in the tray.</h3><p>Open the panel from the tray or with Ctrl+Shift+H. Hide the charms for a call, bring them back after.</p></div>
         </div>
         <div class="receipt rv" aria-label="What you get">
-          <div class="hd"><b>Charm Line</b><span>SHOP COPY · <span id="today"></span></span></div>
+          <div class="hd"><b>Luck on a Line</b><span>CHARM LINE · SHOP COPY · <span id="today"></span></span></div>
           <dl>
             <div class="r"><dt>Charms</dt><dd data-count>57</dd></div>
             <div class="r"><dt>Collections</dt><dd data-count-col>10</dd></div>
@@ -330,6 +336,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
             <div class="r"><dt>Your own images</dt><dd>unlimited</dd></div>
             <div class="r"><dt>Account needed</dt><dd>none</dd></div>
             <div class="r"><dt>Internet needed</dt><dd>none</dd></div>
+            <div class="r"><dt>Luck</dt><dd>plenty</dd></div>
           </dl>
           <hr>
           <div class="r tot"><dt>TOTAL</dt><dd>FREE</dd></div>
@@ -343,8 +350,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="yours">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">No. 03 · Make it yours</span>
-        <div><h2>Pick the thread. Pick the cap. <i>Or bring your own.</i></h2></div>
+        <span class="no mono">Line 03 · Make it yours</span>
+        <div><h2>Your line. <i>Your luck.</i></h2><p>Pick the thread, pick the cap, or hang something only you have.</p></div>
       </div>
       <div class="yours">
         <div class="sample rv">
@@ -389,8 +396,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="home">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">No. 04 · Take one home</span>
-        <div><h2>Free, for every <i>desktop.</i></h2><p>No account, no sign-up, nothing to pay. It installs in seconds and sits quietly in your system tray.</p></div>
+        <span class="no mono">Line 04 · Take one home</span>
+        <div><h2>Take a little luck <i>home.</i></h2><p>Free for every desktop. No account, no sign-up, nothing to pay. It installs in seconds and sits quietly in your system tray.</p></div>
       </div>
       <div class="home rv">
         <div class="cord" aria-hidden="true"></div>
@@ -408,8 +415,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="counter">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">No. 05 · At the counter</span>
-        <div><h2>Things people <i>usually ask.</i></h2></div>
+        <span class="no mono">Line 05 · At the counter</span>
+        <div><h2>Before you hang <i>your luck.</i></h2></div>
       </div>
       <div class="qa">
         <div class="q rv"><span class="n mono">Q.01</span><h3>Is it really free?</h3><p>Yes. No account, no ads, no trial. Download it and it's yours.</p></div>
@@ -429,11 +436,11 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <div class="wrap">
     <div class="big" aria-hidden="true">
       <svg class="strand" viewBox="0 0 1000 120" preserveAspectRatio="none"><path d="M-10 20 Q500 130 1010 20" fill="none" stroke="#b8862f" stroke-width="5"/><path d="M-10 20 Q500 130 1010 20" fill="none" stroke="#e0b96c" stroke-width="5" stroke-dasharray="3 7"/></svg>
-      <h2>Charm <i>Line</i></h2>
-      <img class="dangle" src="/assets/charms/nazar.webp" alt="" loading="lazy">
+      <h2>luck, <i>on a line.</i></h2>
+      <span class="dangle"><img src="/assets/charms/nazar.webp" alt="" loading="lazy"></span>
     </div>
     <div class="frow mono">
-      <span>© <span id="yr">2026</span> Charm Line · Made by Manoj</span>
+      <span>© <span id="yr">2026</span> Charm Line · Made by Manoj · luckonaline.netlify.app</span>
       <nav aria-label="Footer"><a href="#catalogue">Catalogue</a><a href="#yours">Make it yours</a><a href="#home">Download</a><a href="#counter">Questions</a></nav>
       <span>Free · offline · yours</span>
     </div>
@@ -501,7 +508,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   let ALL = [], filter = 'All', tt;
   const toast = $('#toast');
   function say(msg) { $('#toastMsg').textContent = msg; toast.classList.add('show'); clearTimeout(tt); tt = setTimeout(() => toast.classList.remove('show'), 2600); }
-  function syncCards() { $$('#grid .spec').forEach(c => { const on = onLine.includes(c.dataset.id); c.setAttribute('aria-pressed', on); c.querySelector('.act').textContent = on ? 'On the line ✓' : 'Hang it +'; }); }
+  function syncCards() { $('#luckN').textContent = onLine.length; $$('#grid .spec').forEach(c => { const on = onLine.includes(c.dataset.id); c.setAttribute('aria-pressed', on); c.querySelector('.act').textContent = on ? 'On the line ✓' : 'Hang it +'; }); }
   function renderGrid() {
     const list = filter === 'All' ? ALL : ALL.filter(x => x.col === filter);
     $('#grid').innerHTML = list.map(x => `<button class="spec" data-id="${x.id}" aria-pressed="false">
@@ -510,8 +517,8 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
       <span class="nm">${x.name}</span><span class="act mono">Hang it +</span></button>`).join('');
     $$('#grid .spec').forEach(c => c.addEventListener('click', () => {
       const id = c.dataset.id, i = onLine.indexOf(id), name = c.querySelector('.nm').textContent;
-      if (i >= 0) { onLine.splice(i, 1); tell(line, { type: 'remove', charm: id }); say(`${name} taken down`); }
-      else { if (onLine.length >= MAX) tell(line, { type: 'remove', charm: onLine.shift() }); onLine.push(id); tell(line, { type: 'add', charm: id }); say(`${name} is on the line`); }
+      if (i >= 0) { onLine.splice(i, 1); tell(line, { type: 'remove', charm: id }); say(`${name} taken down. Luck −1`); }
+      else { if (onLine.length >= MAX) tell(line, { type: 'remove', charm: onLine.shift() }); onLine.push(id); tell(line, { type: 'add', charm: id }); say(`${name} is on the line. Luck +1`); }
       syncCards();
     }));
     syncCards();
@@ -522,7 +529,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
     $$('[data-count]').forEach(e => e.textContent = ALL.length);
     $$('[data-count-col]').forEach(e => e.textContent = cols.length);
     $('[data-count-line]').textContent = `${ALL.length} charms · ${cols.length} collections`;
-    const t = ALL.map(x => `<span>${x.name}<i>✦</i></span>`).join('');
+    const t = ALL.map((x, i) => (i % 8 === 0 ? '<em>luck on a line</em><span><i>✦</i></span>' : '') + `<span>${x.name}<i>✦</i></span>`).join('');
     $('#ticker').innerHTML = t + t;
     $('#filters').innerHTML = ['All', ...cols.map(c => c.name)].map(n => `<button aria-pressed="${n === filter}" data-f="${n}">${n}<span>${n === 'All' ? ALL.length : cols.find(c => c.name === n).items.length}</span></button>`).join('');
     $$('#filters button').forEach(b => b.addEventListener('click', () => { filter = b.dataset.f; $$('#filters button').forEach(x => x.setAttribute('aria-pressed', x === b)); renderGrid(); }));
