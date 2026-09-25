@@ -33,6 +33,8 @@ so the website's buttons always serve the newest version. You don't need to rede
 
 ## Website (Netlify)
 
+Live at **https://luckonaline.netlify.app**, deployed from `main`.
+
 Netlify runs `node scripts/build-site.mjs` and publishes `website/`. The script copies `renderer/`
 into `website/demo/`, so the page's live, swingable preview is the real app engine. It also
 writes the collection list from the app's `COLLECTIONS`. Run the same command before previewing
