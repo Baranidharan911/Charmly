@@ -2653,10 +2653,11 @@ function draw(){
   for(const c of charms){
     drawHook(c);
   }
+  const zs=Math.min(r*3,1600/Math.max(1,charms.length));
   charms.forEach((c,i)=>{
     const e=c.pts.at(-1),{dx,dy}=dirOf(c),th=Math.atan2(dx,dy);
     if(c.clapper){const d=th-c.pth;c.clap+=(Math.max(-.6,Math.min(.6,d*16))-c.clap)*.25;c.clapper.rotation.z=c.clap}
-    c.pth=th;c.obj.position.set(e.x,-e.y,i*r*3);c.obj.rotation.z=th;c.inner.rotation.y=c.yaw;c.obj.scale.setScalar(r);
+    c.pth=th;c.obj.position.set(e.x,-e.y,i*zs);c.obj.rotation.z=th;c.inner.rotation.y=c.yaw;c.obj.scale.setScalar(r);
   });
   renderer.render(scene,camera);
 }
