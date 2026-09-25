@@ -1627,6 +1627,8 @@ if(DEMO){
     if(e.origin!==location.origin)return;const m=e.data||{};
     if(m.type==='charms'){charms.slice().forEach(removeCharm);select(null);charms=demoList(m.charms).map(c=>{const x=makeCharm(c.type,c.axf,c.len);x.pts.at(-1).px-=2+Math.random()*2;return x});wake()}
     if(m.type==='nudge')$('nudge').click();
+    if(m.type==='rope'){S.rope=m.rope;syncRopes();wake()}
+    if(m.type==='cap'){if(m.design)S.capDesign=m.design;if(m.finish)S.cap=m.finish;buildCaps();rebuildAll()}
   });
   window.charmThumbs=k=>{const t=renderThumbs(k);resize();return t};
 }
@@ -1638,6 +1640,7 @@ async function init(){
   const d=load();
   if(d&&d.S){const v=d.S.v;Object.assign(S,d.S);if(v!==5){if(S.capDesign==='beads'&&S.cap==='gold')S.capDesign='signature';S.v=5}}
   if(DEMO&&Q.get('size'))S.size=+Q.get('size');
+  if(DEMO&&Q.get('rope'))S.rope=Q.get('rope');
   const list=DEMO&&Q.get('charms')?demoList(Q.get('charms')):d&&Array.isArray(d.charms)&&d.charms.length?d.charms.filter(c=>c.type==='img'?c.opts&&imports[c.opts.key]:LIB.TYPES[c.type]):
     W<600?[{type:'bommai',axf:.3,len:150},{type:'nazar',axf:.72,len:110}]:
     [{type:'nimbu',axf:.3,len:140},{type:'bommai',axf:.42,len:200},{type:'kitpendant',axf:.54,len:120,opts:{team:'india',name:'Your name',number:7}},{type:'nazar',axf:.65,len:170},{type:'lantern',axf:.76,len:130},{type:'bell',axf:.87,len:180}];
