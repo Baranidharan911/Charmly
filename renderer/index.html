@@ -1362,6 +1362,7 @@ function scHeartR(){
   if(SC_HR)return SC_HR;const S=[],B=720,tab=new Float32Array(B+1);
   for(let i=0;i<2000;i++){const t=i/2000*TAU,X=16*Math.pow(Math.sin(t),3),Y=13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t)+1.5;S.push([Math.atan2(X,Y),Math.hypot(X,Y)/17])}
   for(let b=0;b<=B;b++){const a=-PI+b/B*TAU;let best=1e9,r=0;for(const s of S){let d=Math.abs(s[0]-a);d=Math.min(d,TAU-d);if(d<best){best=d;r=s[1]}}tab[b]=r}
+  {const c=Float32Array.from(tab);for(let b=0;b<=B;b++){let a=0,n=0;for(let k=-4;k<=4;k++){a+=c[((b+k)%B+B)%B];n++}tab[b]=a/n}}
   const sm=new Float32Array(B+1),W=110;for(let b=0;b<=B;b++){let a=0,n=0;for(let k=-W;k<=W;k++){const w=Math.cos(k/W*PI/2);a+=tab[((b+k)%B+B)%B]*w;n+=w}sm[b]=a/n}
   const lk=(T,u)=>{const i=Math.floor(u),f=u-i;return T[i]*(1-f)+T[i+1]*f};
   SC_HR=(phi,rho=1)=>{let u=(phi+PI)/TAU*B;u=((u%B)+B)%B;const e=lk(tab,u);if(rho>=1)return e;const q=Math.pow(rho,4);return lk(sm,u)*(1-q)+e*q};return SC_HR;
@@ -1393,13 +1394,24 @@ function scLocket(){
   const g=new THREE.Group();let y=cap(g,scCap('gold'));const R=scHeartR(),E=scEngrave();
   const S=.78,D=.2,top=R(0)*S,oy=y-.2-top,L=new THREE.Group();L.position.y=oy;g.add(L);
   const gold=Mt(0xe8b45a,.24,{map:E.map,bumpMap:E.bump,bumpScale:.9}),rim=Mt(0xb98535,.3);
+  // puffy height field: rounded-edge pillow from distance-to-outline, blurred so there is no centre crease
+  const G=120,ext0=S*1.02,cs=2*ext0/G,out=[];for(let i=0;i<220;i++){const a=-PI+i/220*TAU,r=R(a)*S;out.push([Math.sin(a)*r,Math.cos(a)*r])}
+  let H=new Float32Array((G+1)*(G+1));const d0=.3*S;
+  for(let j=0;j<=G;j++)for(let i=0;i<=G;i++){const X=-ext0+i*cs,Y=-ext0+j*cs,phi=Math.atan2(X,Y),rt=Math.hypot(X,Y)/(R(phi)*S);if(rt>=1)continue;
+    let d=1e9;for(const q of out)d=Math.min(d,Math.hypot(X-q[0],Y-q[1]));const u=Math.min(1,d/d0);H[j*(G+1)+i]=Math.sqrt(1-(1-u)*(1-u))*(.86+.14*(1-rt*rt))}
+  for(let pass=0;pass<3;pass++){const T2=new Float32Array(H.length);for(let j=0;j<=G;j++)for(let i=0;i<=G;i++){let a=0,n=0;for(let k=-2;k<=2;k++){const ii=i+k;if(ii>=0&&ii<=G){a+=H[j*(G+1)+ii];n++}}T2[j*(G+1)+i]=a/n}
+    H=new Float32Array(H.length);for(let j=0;j<=G;j++)for(let i=0;i<=G;i++){let a=0,n=0;for(let k=-2;k<=2;k++){const jj=j+k;if(jj>=0&&jj<=G){a+=T2[jj*(G+1)+i];n++}}H[j*(G+1)+i]=a/n}}
+  const hs=(X,Y)=>{const fx=Math.max(0,Math.min(G-.001,(X+ext0)/cs)),fy=Math.max(0,Math.min(G-.001,(Y+ext0)/cs)),i=Math.floor(fx),j=Math.floor(fy),a=fx-i,b=fy-j,k=j*(G+1)+i;
+    return (H[k]*(1-a)+H[k+1]*a)*(1-b)+(H[k+G+1]*(1-a)+H[k+G+2]*a)*b};
   const geo=new THREE.SphereGeometry(1,112,60);geo.rotateX(PI/2);const p=geo.attributes.position,uv=geo.attributes.uv;
-  for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),z=p.getZ(i),rho=Math.hypot(x,yy),phi=Math.atan2(x,yy),r=R(phi,rho);
-    const X=x*r*S,Y=yy*r*S,tip=Math.max(0,-Math.cos(phi))**6*rho*rho,Z=Math.sign(z)*D*Math.pow(Math.abs(z),.62)*(1-.45*tip);
+  for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),z=p.getZ(i),rho=Math.min(1,Math.hypot(x,yy)),phi=Math.atan2(x,yy),r=R(phi,rho);
+    const X=x*r*S,Y=yy*r*S,Z=Math.sign(z)*D*Math.max(hs(X,Y),.0)*Math.sqrt(Math.max(0,1-Math.pow(rho,14)));
     p.setXYZ(i,X,Y,Z);uv.setXY(i,(z>=0?X:-X)/S/2+.5,Y/S/2+.5)}
   geo.computeVertexNormals();L.add(new THREE.Mesh(geo,gold));
-  const hz=(X,Y)=>{const phi=Math.atan2(X,Y);let rho=.5;for(let k=0;k<6;k++)rho=Math.min(1,Math.hypot(X,Y)/(R(phi,rho)*S));return D*Math.pow(Math.sqrt(1-rho*rho),.62)};
+  const hz=(X,Y)=>D*hs(X,Y);
   const edge=[];for(let i=0;i<=160;i++){const a=-PI+i/160*TAU,r=R(a)*S*1.004;edge.push(new V3(Math.sin(a)*r,Math.cos(a)*r,0))}
+  // crisp raised bezel rim just inside the edge, front and back
+  [-1,1].forEach(sd=>{const rp=[];for(let i=0;i<=160;i++){const a=-PI+i/160*TAU,r=R(a)*S*.955,X=Math.sin(a)*r,Y=Math.cos(a)*r;rp.push(new V3(X,Y,sd*(hz(X,Y)+.004)))}L.add(tube(M.gold,rp,.017,200,7,true))});
   L.add(tube(rim,edge,.016,200,7,true));
   // hinge on the left, clasp tab on the right
   const ha=-1.72,hr=R(ha)*S,hx=Math.sin(ha)*hr,hy=Math.cos(ha)*hr;
@@ -1505,10 +1517,11 @@ function scBunny(){
   const blush=P(0xff8fab,{roughness:.6,transparent:true,opacity:.45,depthWrite:false});
   const hc=[0,-.4,.03],hr=[.4,.35,.36];B.add(scSph(cream,1,...hc,...hr));
   // ears: left upright, right lop
-  const ear=(pts,z,s)=>{const o=tap(cream,pts,t=>.115*Math.pow(Math.sin(Math.min(1,t*1.15+.12)*PI*.5+ .0),1)*(1-t*t*.8)+.01,40,20);o.scale.z=.42;o.position.z=z;B.add(o);
-    const i=tap(pink,pts.map((q,k)=>q.clone().add(new V3(0,0,0))),t=>(.115*(1-t*t*.8))*.55*(t<.08?t/.08:1)+.004,40,14);i.scale.z=.3;i.position.z=z+.035;B.add(i)};
+  const ew=t=>.118*Math.pow(Math.sin(PI*(.14+.84*t)),.55)+.012;
+  const ear=(pts,z,th=.46,ry=0)=>{const E=new THREE.Group();E.position.z=z;E.rotation.y=ry;B.add(E);const o=tap(cream,pts,ew,48,22);o.scale.z=th;E.add(o);
+    const i=tap(pink,pts.map(q=>q.clone()),t=>ew(t)*.6*(t<.1?t/.1:1)+.003,48,16);i.scale.z=th*.62;i.position.z=.042*th/.46;E.add(i)};
   ear([new V3(-.13,-.1,0),new V3(-.2,.12,0),new V3(-.28,.36,0),new V3(-.36,.5,0)],-.02);
-  ear([new V3(.13,-.1,0),new V3(.24,.1,0),new V3(.42,.14,0),new V3(.56,.0,0),new V3(.6,-.16,0)],-.02);
+  ear([new V3(.12,-.1,0),new V3(.24,.06,0),new V3(.38,.07,0),new V3(.48,-.06,0),new V3(.51,-.25,0),new V3(.48,-.42,0)],.02,.62,-.35);
   // face
   [-1,1].forEach(s=>{const ex=s*.155,ey=-.37;scEye(B,ex,ey,scZ(hc,hr,ex,ey,-.014),.06,null,true);
     B.add(scSph(blush,1,s*.26,-.49,scZ(hc,hr,s*.26,-.49,-.012),.075,.045,.02))});
@@ -1524,7 +1537,7 @@ function scBunny(){
   const cc=new THREE.CatmullRomCurve3(cp),Q=new V3(),T=new V3();for(let k=1;k<5;k++){const t=k/5.5;cc.getPointAt(t,Q);cc.getTangentAt(t,T);const r=scTor(carD,.075*(1-t*.88)+.002,.0035,Q.x,Q.y,Q.z,0,0,0,PI*1.1);r.quaternion.setFromUnitVectors(new V3(0,0,1),T);r.rotateZ(PI*.5);B.add(r)}
   const lf=P(0x49a83a,{roughness:.35,clearcoat:.5});[[-.36,-.56],[-.4,-.64],[-.32,-.52]].forEach(([xx,yy],k)=>B.add(tap(lf,[new V3(-.22,-.7,.42),new V3((xx-.22)/2-.02,(yy-.7)/2+.02,.43),new V3(xx,yy,.42+k*.01)],t=>.028*(1-t)+.006,12,8)));
   // arms + paws holding carrot
-  [-1,1].forEach(s=>{B.add(tap(cream,[new V3(s*.3,-.76,.2),new V3(s*.31,-.9,.34),new V3(s*.15,-.9,.46)],t=>.095-t*.015,16,16));B.add(scSph(cream,.095,s*.12,-.86,.47,1,.9,.8))});
+  [-1,1].forEach(s=>{B.add(tap(cream,[new V3(s*.32,-.72,.16),new V3(s*.34,-.86,.3),new V3(s*.26,-.93,.4),new V3(s*.15,-.9,.46)],t=>.082+.022*Math.sin(t*PI*.9)-t*.01,24,16));B.add(scSph(cream,.095,s*.12,-.86,.47,1,.9,.8))});
   // feet with toe beans
   [-1,1].forEach(s=>{const fc=[s*.24,-1.35,.26],fr=[.16,.12,.2];B.add(scSph(cream,1,...fc,...fr));const fz=fc[2]+fr[2]-.006;
     B.add(scSph(pink,1,fc[0],-1.38,fz,.06,.045,.02));[-1,0,1].forEach(k=>B.add(scSph(pink,1,fc[0]+k*.055,-1.3+Math.abs(k)*.012,fz-Math.abs(k)*.01,.024,.022,.015)))});
