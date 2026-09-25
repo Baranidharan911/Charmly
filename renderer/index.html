@@ -2373,11 +2373,11 @@ function dCamera(){
 function dPlanetTex(){
   if(D_TX.bands)return;
   D_TX.bands=canvasTex(1024,512,(x,w,h)=>{
-    const pal=[[232,212,170],[220,190,136],[204,164,108],[188,144,90],[170,124,76],[148,104,66],[212,180,126],[232,214,176],[196,156,104]];
+    const pal=[[236,206,150],[214,168,98],[190,132,66],[160,98,48],[128,74,36],[98,56,30],[226,184,116],[244,222,176],[176,112,58]];
     const col=[];let pos=0;const stops=[];while(pos<h+40){stops.push([pos,pal[(rnd()*pal.length)|0]]);pos+=rnd()<.15?14+rnd()*22:3+rnd()*9}
     for(let j=0;j<h;j++){let k=0;while(stops[k+1][0]<j)k++;const [p0,c0]=stops[k],[p1,c1]=stops[k+1],t=(j-p0)/(p1-p0),s=t*t*(3-2*t);col.push([0,1,2].map(i=>c0[i]+(c1[i]-c0[i])*s))}
     for(let j=0;j<h;j++){const lat=j/h,eq=Math.exp(-(((lat-.5)/.07)**2)),pole=Math.max(0,Math.abs(lat-.5)*2-.72)/.28,f=1+(rnd()-.5)*.05;
-      col[j]=col[j].map((c,i)=>{c=c*f;c=c+(246-c)*eq*.3;c=c*(1-pole*.35)+[120,140,150][i]*pole*.3;return c})}
+      col[j]=col[j].map((c,i)=>{c=c*f;c=c+(246-c)*eq*.18;c=c*(1-pole*.35)+[120,140,150][i]*pole*.3;return c})}
     const d=x.createImageData(w,h);
     for(let j=0;j<h;j++)for(let i=0;i<w;i++){const u=i/w*TAU;let yy=j+1.3*Math.sin(u*3+j*.07)+.7*Math.sin(u*9+j*.21)+.35*Math.sin(u*27+j*.5);yy=Math.max(0,Math.min(h-1.001,yy));const j0=yy|0,t=yy-j0,a=col[j0],b=col[j0+1]||a,n=(rnd()-.5)*6;
       const o=(j*w+i)*4;for(let c=0;c<3;c++)d.data[o+c]=a[c]+(b[c]-a[c])*t+n;d.data[o+3]=255}
@@ -2388,10 +2388,10 @@ function dPlanetTex(){
   },true);
   D_TX.ringP=D_TX.ringP||(canvasTex(1024,4,(x,w,h)=>{const d=x.createImageData(w,h);
     for(let i=0;i<w;i++){const u=i/w;let a,c;
-      if(u<.2){a=.45+u*1.6;c=[70,64,60]}else if(u<.55){a=.98;c=u<.3?[176,170,160]:[240,236,228]}else if(u<.6){a=.1;c=[40,34,30]}else if(u<.9){a=.92;c=[196,190,180]}else if(u<.94){a=0;c=[0,0,0]}else if(u<.955){a=.55;c=[230,220,200]}else{a=0;c=[0,0,0]}
+      if(u<.2){a=.22+u*1.3;c=[150,118,84]}else if(u<.55){a=.97;c=u<.3?[206,160,98]:[236,196,130]}else if(u<.6){a=.55;c=[34,22,14]}else if(u<.9){a=.93;c=[204,158,100]}else if(u<.94){a=0;c=[0,0,0]}else if(u<.955){a=.6;c=[228,200,150]}else{a=0;c=[0,0,0]}
       if(u>.815&&u<.828)a*=.1;
-      const n=.74+.14*Math.sin(i*1.9)+.12*Math.sin(i*.43)*Math.sin(i*.11)+(rnd()-.5)*.2;a=Math.max(0,Math.min(1,a*n));
-      const fall=u<.02?u/.02:1;for(let j=0;j<h;j++){const o=(j*w+i)*4;d.data[o]=c[0]*(.75+.3*n);d.data[o+1]=c[1]*(.75+.3*n);d.data[o+2]=c[2]*(.75+.3*n);d.data[o+3]=255*a*fall}}
+      const n=.74+.14*Math.sin(i*1.9)+.12*Math.sin(i*.43)*Math.sin(i*.11)+(rnd()-.5)*.2;a=Math.max(0,Math.min(1,a*(a>.9?1:.7+.3*n)));
+      const fall=u<.02?u/.02:1;for(let j=0;j<h;j++){const o=(j*w+i)*4;d.data[o]=c[0]*(.62+.45*n);d.data[o+1]=c[1]*(.62+.45*n);d.data[o+2]=c[2]*(.62+.45*n);d.data[o+3]=255*a*fall}}
     x.putImageData(d,0,0)},true));
 }
 function dPlanet(){
@@ -2401,18 +2401,19 @@ function dPlanet(){
   g.add(dTor(capMetal(),.045,.014,0,y-.19,0));
   const R=.5,cy=y-.255-R;
   g.add(dL(capMetal(),[[.001,.035],[.03,.03],[.06,.0],[.075,-.03]],32,cy+R+.02));
-  const T=new THREE.Group();T.position.y=cy;T.rotation.set(.62,0,-.32);g.add(T);
+  const T=new THREE.Group();T.position.y=cy;T.rotation.set(.49,0,-.3);g.add(T);
   const pm=mat({map:D_TX.bands,roughness:.6,clearcoat:.35,clearcoatRoughness:.35},true);
   const LD=new V3(-.8,1.2,1.4).normalize(),uL={value:new V3(0,1,0)},inv=new THREE.Matrix4();
   pm.onBeforeCompile=sh=>{sh.uniforms.uL=uL;sh.uniforms.uRing={value:D_TX.ringP};
     sh.vertexShader='varying vec3 vLoc;\n'+sh.vertexShader.replace('#include <begin_vertex>','#include <begin_vertex>\nvLoc=position;');
-    sh.fragmentShader='varying vec3 vLoc;uniform vec3 uL;uniform sampler2D uRing;\n'+sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\nif(uL.y*vLoc.y<0.0){vec3 q=vLoc-uL*(vLoc.y/uL.y);float rr=length(q.xz);if(rr>.63&&rr<1.03){float al=texture2D(uRing,vec2((rr-.63)/.4,.5)).a;gl_FragColor.rgb*=1.0-.72*al;}}');};
+    sh.fragmentShader='varying vec3 vLoc;uniform vec3 uL;uniform sampler2D uRing;\n'+sh.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\nif(uL.y*vLoc.y<0.0){vec3 q=vLoc-uL*(vLoc.y/uL.y);float rr=length(q.xz);if(rr>.6&&rr<.94){float al=texture2D(uRing,vec2((rr-.6)/.34,.5)).a;gl_FragColor.rgb*=1.0-.72*al;}}');};
   const pl=new THREE.Mesh(new THREE.SphereGeometry(R,96,64),pm);pl.rotation.y=1.2;T.add(pl);
   pl.onBeforeRender=()=>{inv.copy(pl.matrixWorld).invert();uL.value.copy(LD).transformDirection(inv)};
-  const rgeo=new THREE.RingGeometry(.63,1.03,192,2);const p=rgeo.attributes.position,uv=rgeo.attributes.uv;
-  for(let i=0;i<p.count;i++){const r=Math.hypot(p.getX(i),p.getY(i));uv.setXY(i,(r-.63)/.4,.5)}
-  const rm=new THREE.MeshStandardMaterial({map:D_TX.ringP,transparent:true,side:THREE.DoubleSide,roughness:.85,metalness:0,depthWrite:false});rm.color.setRGB(.9,.88,.85);
+  const rgeo=new THREE.RingGeometry(.6,.94,192,2);const p=rgeo.attributes.position,uv=rgeo.attributes.uv;
+  for(let i=0;i<p.count;i++){const r=Math.hypot(p.getX(i),p.getY(i));uv.setXY(i,(r-.6)/.34,.5)}
+  const rm=new THREE.MeshStandardMaterial({map:D_TX.ringP,transparent:true,side:THREE.DoubleSide,roughness:.85,metalness:0,depthWrite:false});rm.color.setRGB(.86,.7,.5);
   const ring=new THREE.Mesh(rgeo,rm);ring.rotation.x=-PI/2;ring.renderOrder=3;T.add(ring);
+  {const mn=new THREE.Mesh(new THREE.SphereGeometry(.075,32,20),mat({color:0xc9c4bc,roughness:.8,bumpMap:noiseTex,bumpScale:.02}));const ma=2.35;mn.position.set(Math.cos(ma)*1.0,.02,Math.sin(ma)*1.0);T.add(mn)}
   return g;
 }
 
