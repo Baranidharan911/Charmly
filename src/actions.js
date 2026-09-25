@@ -137,9 +137,12 @@ function createActions({
     return r.ok ? { ok: true } : r;
   }
 
+  let confirming = false; // one confirmation dialog at a time: repeat pulls while it's open do nothing
+
   async function confirm(id, a) {
     const hash = V.hashTarget(a.kind, a.target);
     if (a.confirmedHash === hash) return true;
+    if (confirming) return null;
     const verb = a.kind === 'url' ? (a.target.startsWith('mailto:') ? 'Write an email to' : 'Open') : 'Open';
     const opts = {
       type: 'question', buttons: ['Open', 'Cancel'], defaultId: 0, cancelId: 1, noLink: true,
@@ -148,7 +151,8 @@ function createActions({
     };
     const win = getWin();
     let res;
-    try { res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts); } catch (e) { log('confirm failed', e); return false; }
+    confirming = true;
+    try { res = win ? await dialog.showMessageBox(win, opts) : await dialog.showMessageBox(opts); } catch (e) { log('confirm failed', e); return false; } finally { confirming = false; }
     if (!res || res.response !== 0) return false;
     store.update((d) => { if (d.actions[id]) d.actions[id].confirmedHash = hash; });
     return true;
@@ -178,7 +182,11 @@ function createActions({
     const cur = actionFor(cid, slot);
     if (!cur || !cur.a) return fail('Nothing to do for this charm.');
     if (!limiter.take()) return fail('Slow down');
-    if (CONFIRM_KINDS.has(cur.a.kind) && !(await confirm(cur.id, cur.a))) return fail('Canceled', { declined: true });
+    if (CONFIRM_KINDS.has(cur.a.kind)) {
+      const ok = await confirm(cur.id, cur.a);
+      if (ok === null) return fail('Canceled', { canceled: true });
+      if (!ok) return fail('Canceled', { declined: true });
+    }
     try {
       const r = await execute(store.data.actions[cur.id] || cur.a);
       return r.ok ? { ok: true, info: await info(cur.id, cur.a) } : r;

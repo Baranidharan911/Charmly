@@ -24,7 +24,7 @@ function setup(t, over = {}) {
     clipboard: { writeText: (s) => calls.clip.push(s) },
     dialog: {
       showOpenDialog: async () => over.pickResult || { canceled: false, filePaths: ['C:\\Apps\\Spotify.exe'] },
-      showMessageBox: async (o) => { calls.confirm++; calls.lastMessage = o.message; return { response: over.decline ? 1 : 0 }; }
+      showMessageBox: async (o) => { calls.confirm++; calls.lastMessage = o.message; return over.answer ? over.answer() : { response: over.decline ? 1 : 0 }; }
     },
     stat: (p) => { if (!files[p]) throw new Error('ENOENT'); return { isFile: () => files[p] === 'file', isDirectory: () => files[p] === 'dir' }; },
     getIcon: async () => 'data:image/png;base64,AAAA',
@@ -125,4 +125,20 @@ test('copy, toggle, clear, forget', async (t) => {
   assert.deepEqual(await a.list(), {});
   assert.deepEqual(store.data.actions, {});
   assert.equal((await a.trigger(CID, 'pull')).ok, false);
+});
+
+test('a pull while the confirmation is still open does not stack a second dialog', async (t) => {
+  let answer;
+  const { a, calls, tick } = setup(t, { answer: () => new Promise((r) => { answer = r; }) });
+  await a.setUrl(CID, 'pull', 'https://example.com');
+  const first = a.trigger(CID, 'pull');
+  await new Promise((r) => setImmediate(r));
+  tick(2000);
+  const second = await a.trigger(CID, 'pull');
+  assert.equal(second.ok, false);
+  assert.equal(second.canceled, true);
+  answer({ response: 0 });
+  assert.equal((await first).ok, true);
+  assert.equal(calls.confirm, 1);
+  assert.deepEqual(calls.external, ['https://example.com/']);
 });
