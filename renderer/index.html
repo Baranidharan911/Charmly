@@ -1274,13 +1274,29 @@ function lantern(){
   return g;
 }
 
+// @new-charms:A (add set A charm functions above this line)
+//
+// @new-charms:B (add set B charm functions above this line)
+//
+// @new-charms:C (add set C charm functions above this line)
+//
+// @new-charms:D (add set D charm functions above this line)
+//
 const COLLECTIONS=[
   {name:'Protection',items:[['nazar','Nazar',nazar],['bommai','Drishti bommai',bommai],['nimbu','Nimbu-mirchi',nimbu],['hamsa','Hamsa',hamsa],['horseshoe','Horseshoe',horseshoe],['dreamcatcher','Dream catcher',dreamcatcher]]},
   {name:'Tamil Divine',items:[['vel','Vel',vel],['bell','Temple bell',bell],['om','Om coin',omcoin],['trishul','Trishul',trishul],['rudraksha','Rudraksha',rudraksha],['lamp','Hanging lamp',lamp]]},
   {name:'Football',items:[['kitpendant','Jersey pendant',kitpendant],['jersey','Hanging jersey',jersey],['football','Football',football],['boots','Boots',boots],['trophy','Trophy',trophy],['whistle','Whistle',whistle]]},
   {name:'Anime & Japan',items:[['katana','Katana',katana],['ramen','Ramen bowl',ramen],['onigiri','Onigiri',onigiri],['kitsune','Kitsune mask',kitsune],['omamori','Omamori',omamori],['lantern','Paper lantern',lantern]]},
   {name:'Lucky',items:[['daruma','Daruma',daruma],['luckycat','Lucky cat',luckycat],['dice','Fuzzy dice',dice],['clover','Clover in resin',clover],['fortune','Fortune coin',fortune]]},
-  {name:'Nature & play',items:[['crystal','Amethyst',crystal],['moonstar','Moon & star',moonstar],['cherries','Cherries',cherries],['cricket','Cricket bat',cricket]]}
+  {name:'Nature & play',items:[['crystal','Amethyst',crystal],['moonstar','Moon & star',moonstar],['cherries','Cherries',cherries],['cricket','Cricket bat',cricket]]},
+  // @collection:A (add set A collection entry above this line)
+  //
+  // @collection:B (add set B collection entry above this line)
+  //
+  // @collection:C (add set C collection entry above this line)
+  //
+  // @collection:D (add set D collection entry above this line)
+  //
 ];
 const TYPES={};COLLECTIONS.forEach(c=>c.items.forEach(([id,name,fn])=>TYPES[id]={name,fn,collection:c.name}));
 
@@ -1311,6 +1327,8 @@ const $=id=>document.getElementById(id);
 const cv=$('c'),ctx=cv.getContext('2d'),glc=$('g');
 const hasFilter='filter' in ctx;
 const KEY='charmline:v3';
+// ?demo=1 is the website's embedded preview: no saving, no panel, charms picked by the page.
+const Q=new URLSearchParams(location.search),DEMO=Q.has('demo');
 const reduce=matchMedia('(prefers-reduced-motion: reduce)').matches;
 let W=0,H=0,DPR=1,topY=30;
 const S={rope:'thread',size:1,sound:true,wind:!reduce,cap:'gold',capDesign:'signature',v:5};
@@ -1407,7 +1425,6 @@ function draw(){
   if(hasFilter)for(const c of charms){const ce=center(c,r);ctx.save();ctx.filter=`blur(${Math.round(r*.28)}px)`;ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(ce.x+r*.22,ce.y+r*.34,ce.rc*.85,ce.rc*.95,0,0,7);ctx.fill();ctx.restore()}
   for(const c of charms)drawRope(c);
   for(const c of charms){
-    if(c===selected){const ce=center(c,r);ctx.save();ctx.setLineDash([4,5]);ctx.strokeStyle='#e1b45c';ctx.lineWidth=1.5;ctx.beginPath();ctx.arc(ce.x,ce.y,ce.rc*1.25+8,0,7);ctx.stroke();ctx.restore()}
     drawHook(c);
   }
   charms.forEach((c,i)=>{
@@ -1554,8 +1571,8 @@ function syncRopes(){document.querySelectorAll('#ropes button').forEach(b=>b.set
 $('hide').addEventListener('click',()=>{$('panel').hidden=true;passOver=null});
 $('show').addEventListener('click',()=>{$('panel').hidden=false;$('show').hidden=true});
 
-function renderThumbs(){
-  const tw=128,th=164,ts=new THREE.Scene();ts.environment=LIB.env;LIB.lights(ts);
+function renderThumbs(k=1){
+  const tw=128*k,th=164*k,ts=new THREE.Scene();ts.environment=LIB.env;LIB.lights(ts);
   renderer.setPixelRatio(1);renderer.setSize(tw,th,false);
   const out={};
   for(const id of Object.keys(LIB.TYPES)){
@@ -1582,8 +1599,8 @@ function buildTray(thumbs){
   if(ik.length)root.querySelectorAll('.coll')[1].open=false;
 }
 
-function save(){clearTimeout(save.t);save.t=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({S,charms:charms.map(c=>({type:c.type,axf:c.axf,len:c.len,opts:c.opts}))}))}catch(e){}},300)}
-function load(){try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
+function save(){if(DEMO)return;clearTimeout(save.t);save.t=setTimeout(()=>{try{localStorage.setItem(KEY,JSON.stringify({S,charms:charms.map(c=>({type:c.type,axf:c.axf,len:c.len,opts:c.opts}))}))}catch(e){}},300)}
+function load(){if(DEMO)return null;try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
 
 function resize(){
   DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
@@ -1603,19 +1620,30 @@ window.addEventListener('pointerup',e=>setTimeout(()=>pass(e.clientX,e.clientY),
 setInterval(()=>{if(lastPt.x>=0)pass(lastPt.x,lastPt.y)},120);
 if(CL){CL.onCursor(p=>pass(p.x,p.y));CL.onTogglePanel(()=>{const p=$('panel');p.hidden=!p.hidden;passOver=null;if(!p.hidden)CL.focus()});CL.onTopInset(v=>{TOPINSET=v;resize()})}
 
+// "nazar:170,bell" -> evenly spaced charms; length after the colon is optional.
+function demoList(str){const ids=str.split(',').map(x=>x.split(':')).filter(([id])=>LIB.TYPES[id]);return ids.map(([type,len],i)=>({type,axf:(i+1)/(ids.length+1),len:+len||120+((i*53)%90)}))}
+if(DEMO){
+  addEventListener('message',e=>{
+    if(e.origin!==location.origin)return;const m=e.data||{};
+    if(m.type==='charms'){charms.slice().forEach(removeCharm);select(null);charms=demoList(m.charms).map(c=>{const x=makeCharm(c.type,c.axf,c.len);x.pts.at(-1).px-=2+Math.random()*2;return x});wake()}
+    if(m.type==='nudge')$('nudge').click();
+  });
+  window.charmThumbs=k=>{const t=renderThumbs(k);resize();return t};
+}
 async function init(){
   const th=renderThumbs();
-  const stored=await IDB.all();for(const [k,v] of Object.entries(stored))await loadImport(k,v.url,v.name);
+  const stored=DEMO?{}:await IDB.all();for(const [k,v] of Object.entries(stored))await loadImport(k,v.url,v.name);
   buildTray(th);
   resize();
   const d=load();
   if(d&&d.S){const v=d.S.v;Object.assign(S,d.S);if(v!==5){if(S.capDesign==='beads'&&S.cap==='gold')S.capDesign='signature';S.v=5}}
-  const list=d&&Array.isArray(d.charms)&&d.charms.length?d.charms.filter(c=>c.type==='img'?c.opts&&imports[c.opts.key]:LIB.TYPES[c.type]):
+  if(DEMO&&Q.get('size'))S.size=+Q.get('size');
+  const list=DEMO&&Q.get('charms')?demoList(Q.get('charms')):d&&Array.isArray(d.charms)&&d.charms.length?d.charms.filter(c=>c.type==='img'?c.opts&&imports[c.opts.key]:LIB.TYPES[c.type]):
     W<600?[{type:'bommai',axf:.3,len:150},{type:'nazar',axf:.72,len:110}]:
     [{type:'nimbu',axf:.3,len:140},{type:'bommai',axf:.42,len:200},{type:'kitpendant',axf:.54,len:120,opts:{team:'india',name:'Your name',number:7}},{type:'nazar',axf:.65,len:170},{type:'lantern',axf:.76,len:130},{type:'bell',axf:.87,len:180}];
   charms=list.map(c=>{const m=makeCharm(c.type,c.axf,c.len,c.opts);m.pts.at(-1).px-=1+Math.random()*1.5;return m});
   $('size').value=S.size;$('sound').checked=S.sound;$('wind').checked=S.wind;syncRopes();buildCaps();
-  if(d&&d.charms)$('panel').hidden=true;
+  if(d&&d.charms||DEMO)$('panel').hidden=true;
   addEventListener('resize',resize);
   requestAnimationFrame(t=>{last=t;frame(t)});
 }
