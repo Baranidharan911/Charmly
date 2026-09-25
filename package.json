@@ -1,7 +1,7 @@
 {
   "name": "charm-line",
   "productName": "Charm Line",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Physics-simulated 3D charms hanging on your desktop.",
   "main": "main.js",
   "author": "Manoj",
@@ -9,10 +9,14 @@
   "private": true,
   "scripts": {
     "start": "electron .",
+    "test": "node --test",
     "dist": "electron-builder",
     "dist:win": "electron-builder --win",
     "dist:mac": "electron-builder --mac",
     "dist:linux": "electron-builder --linux"
+  },
+  "dependencies": {
+    "koffi": "^3.3.1"
   },
   "devDependencies": {
     "electron": "^44.4.5",
@@ -22,10 +26,18 @@
     "appId": "in.elbrit.charmline",
     "productName": "Charm Line",
     "directories": { "output": "dist", "buildResources": "build" },
-    "files": ["main.js", "preload.js", "renderer/**/*", "build/tray*.png", "build/icon.png"],
+    "npmRebuild": false,
+    "files": [
+      "main.js", "preload.js", "src/**/*", "renderer/**/*", "build/tray*.png", "build/icon.png",
+      "!renderer/_test/**",
+      "!node_modules/koffi/{doc,vendor,lib}/**"
+    ],
+    "asarUnpack": ["node_modules/@koromix/koffi-*/**/*"],
     "win": { "target": ["nsis", "zip"], "icon": "build/icon.png", "artifactName": "CharmLine-Windows-Portable.${ext}" },
-    "nsis": { "oneClick": true, "perMachine": false, "runAfterFinish": true, "shortcutName": "Charm Line", "artifactName": "CharmLine-Setup.${ext}" },
-    "mac": { "target": [{ "target": "dmg", "arch": ["universal"] }], "icon": "build/icon.png", "category": "public.app-category.entertainment", "extendInfo": { "LSUIElement": true }, "artifactName": "CharmLine-Mac.${ext}" },
-    "linux": { "target": ["AppImage"], "icon": "build/icon.png", "category": "Utility", "artifactName": "CharmLine-Linux.${ext}" }
+    "nsis": { "oneClick": true, "perMachine": false, "runAfterFinish": true, "shortcutName": "Charm Line", "artifactName": "CharmLine-Setup.${ext}", "include": "build/installer.nsh" },
+    "mac": { "target": [{ "target": "dmg", "arch": ["universal"] }], "icon": "build/icon.png", "category": "public.app-category.entertainment", "extendInfo": { "LSUIElement": true }, "artifactName": "CharmLine-Mac.${ext}",
+      "files": ["!node_modules/koffi/**", "!node_modules/@koromix/**"] },
+    "linux": { "target": ["AppImage"], "icon": "build/icon.png", "category": "Utility", "artifactName": "CharmLine-Linux.${ext}",
+      "files": ["!node_modules/koffi/**", "!node_modules/@koromix/**"] }
   }
 }
