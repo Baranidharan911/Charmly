@@ -1,4 +1,5 @@
-# Netlify serves the website/ folder as-is. There is no build step.
+# Netlify publishes website/. The build step copies the app's charm renderer
+# into website/demo/ so the site's live preview always matches the app.
 [build]
   publish = "website"
-  command = ""
+  command = "node scripts/build-site.mjs"
