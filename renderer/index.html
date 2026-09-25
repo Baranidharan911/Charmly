@@ -1274,6 +1274,351 @@ function lantern(){
   return g;
 }
 
+/* ==== Festive India (set A) ==== */
+const FI_SPL=new THREE.SphereGeometry(1,20,14),FI_SPS=new THREE.SphereGeometry(1,10,7),FI_SPM=new THREE.SphereGeometry(1,32,22);shared.add(FI_SPL);shared.add(FI_SPS);shared.add(FI_SPM);
+function fiTor(m,R,t,x=0,y=0,z=0,rx=0,ry=0,rz=0,arc=TAU){const o=new THREE.Mesh(new THREE.TorusGeometry(R,t,t<.02?6:10,Math.max(14,Math.round(Math.min(96,R*110+20)*arc/TAU)),arc),m);o.position.set(x,y,z);o.rotation.set(rx,ry,rz);return o}
+const FI_O=new THREE.Object3D();
+function fiLin(hex){return new THREE.Color(hex).convertSRGBToLinear()}
+function fiSp(m,r,x=0,y=0,z=0,sx=1,sy=1,sz=1){const o=new THREE.Mesh(r<.035?FI_SPS:r<.12?FI_SPL:FI_SPM,m);o.position.set(x,y,z);o.scale.set(r*sx,r*sy,r*sz);return o}
+function fiPut(o,p,q){o.position.copy(p);if(q)o.quaternion.copy(q);return o}
+function fiMx(p,q,s){return new THREE.Matrix4().compose(p,q||new THREE.Quaternion(),s||new V3(1,1,1))}
+function fiAlign(dir){return new THREE.Quaternion().setFromUnitVectors(new V3(0,1,0),dir.clone().normalize())}
+function fiMerge(list){
+  let nv=0,ni=0;const src=list.map(([g0,m,tint])=>{const c=g0.clone();if(m)c.applyMatrix4(m);if(tint&&c.attributes.color){const ca=c.attributes.color;for(let i=0;i<ca.count;i++)ca.setXYZ(i,ca.getX(i)*tint.r,ca.getY(i)*tint.g,ca.getZ(i)*tint.b)}if(!c.index){const n=c.attributes.position.count,a=new Uint32Array(n);for(let i=0;i<n;i++)a[i]=i;c.setIndex(new THREE.BufferAttribute(a,1))}if(!c.attributes.normal)c.computeVertexNormals();nv+=c.attributes.position.count;ni+=c.index.count;return c});
+  const hasC=src.every(c=>c.attributes.color),hasU=src.every(c=>c.attributes.uv);
+  const pos=new Float32Array(nv*3),nor=new Float32Array(nv*3),uv=new Float32Array(nv*2),col=hasC?new Float32Array(nv*3):null,idx=new Uint32Array(ni);let ov=0,oi=0;
+  for(const c of src){const p=c.attributes.position;pos.set(p.array,ov*3);nor.set(c.attributes.normal.array,ov*3);if(hasU)uv.set(c.attributes.uv.array,ov*2);if(col)col.set(c.attributes.color.array,ov*3);const I=c.index.array;for(let i=0;i<I.length;i++)idx[oi+i]=I[i]+ov;ov+=p.count;oi+=I.length;c.dispose()}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.BufferAttribute(pos,3));g.setAttribute('normal',new THREE.BufferAttribute(nor,3));if(hasU)g.setAttribute('uv',new THREE.BufferAttribute(uv,2));if(col)g.setAttribute('color',new THREE.BufferAttribute(col,3));g.setIndex(new THREE.BufferAttribute(idx,1));return g;
+}
+function fiSurf(nu,nv,fn,cfn){
+  const Pp=[],U=[],C=[],I=[];
+  for(let j=0;j<=nv;j++)for(let i=0;i<=nu;i++){const u=i/nu,v=j/nv,p=fn(u,v);Pp.push(p[0],p[1],p[2]);U.push(u,v);if(cfn){const c=cfn(u,v);C.push(c.r,c.g,c.b)}}
+  for(let j=0;j<nv;j++)for(let i=0;i<nu;i++){const a=j*(nu+1)+i,b=a+1,c=a+nu+1,d=c+1;I.push(a,b,d,a,d,c)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(Pp,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(U,2));if(cfn)g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.setIndex(I);g.computeVertexNormals();return g;
+}
+function fiLatheC(prof,seg,cfn,twist){ // lathe with vertex colours; cfn(y)->Color; twist(fn) optional (r,a,y)->r
+  const g=new THREE.LatheGeometry(prof.map(p=>new V2(Math.max(p[0],.0001),p[1])),seg);const p=g.attributes.position,C=[];
+  for(let i=0;i<p.count;i++){const x=p.getX(i),y=p.getY(i),z=p.getZ(i);if(twist){const r=Math.hypot(x,z),a=Math.atan2(z,x),[r2,a2]=twist(r,a,y);p.setXYZ(i,Math.cos(a2)*r2,y,Math.sin(a2)*r2)}const c=cfn(y);C.push(c.r,c.g,c.b)}
+  g.setAttribute('color',new THREE.Float32BufferAttribute(C,3));g.computeVertexNormals();return g;
+}
+let FIM=null;
+function fiMats(){
+  if(FIM)return FIM;
+  const leafTex=canvasTex(128,512,(x,w,h)=>{const gr=x.createLinearGradient(0,0,w,0);gr.addColorStop(0,'#1b4f19');gr.addColorStop(.42,'#2f7a25');gr.addColorStop(.5,'#3a8a2c');gr.addColorStop(.58,'#2f7a25');gr.addColorStop(1,'#1b4f19');x.fillStyle=gr;x.fillRect(0,0,w,h);
+    const g2=x.createLinearGradient(0,0,0,h);g2.addColorStop(0,'rgba(20,50,10,.35)');g2.addColorStop(.5,'rgba(0,0,0,0)');g2.addColorStop(1,'rgba(160,190,60,.25)');x.fillStyle=g2;x.fillRect(0,0,w,h);
+    x.strokeStyle='rgba(190,215,110,.45)';x.lineWidth=1.3;for(let yy=h+10;yy>0;yy-=17){x.beginPath();x.moveTo(w/2,yy);x.quadraticCurveTo(w*.28,yy-12,2,yy-40);x.moveTo(w/2,yy);x.quadraticCurveTo(w*.72,yy-12,w-2,yy-40);x.stroke()}
+    x.fillStyle='#d5dc86';x.fillRect(w/2-2.5,0,5,h);x.fillStyle='rgba(255,255,230,.5)';x.fillRect(w/2-1,0,2,h)},true);
+  FIM={
+    brass:Mt(0xdcab4e,.22,{bumpMap:noiseTex,bumpScale:.0007}),
+    brassAged:Mt(0x9e6c27,.4,{bumpMap:noiseTex,bumpScale:.001}),
+    brassHi:Mt(0xf3d27e,.13),
+    gold:Mt(0xe9b95a,.17),
+    leaf:P(0xffffff,{map:leafTex,roughness:.26,clearcoat:.9,clearcoatRoughness:.15,side:THREE.DoubleSide}),
+    vibhuti:P(0xf3efe6,{roughness:.9,clearcoat:0,bumpMap:noiseTex,bumpScale:.01}),
+    turmeric:P(0xf0b41c,{roughness:.7,clearcoat:.1}),
+    ruby:P(0xc3102c,{roughness:.04,clearcoat:1,clearcoatRoughness:.02,envMapIntensity:1.8}),
+    emerald:P(0x0f8a55,{roughness:.04,clearcoat:1,clearcoatRoughness:.02,envMapIntensity:1.8}),
+    peacockBlue:P(0x0b4fa8,{roughness:.1,clearcoat:1,clearcoatRoughness:.05}),
+  };
+  return FIM;
+}
+
+/* --- Vinayagar: seated brass Ganesha under a flame-arch prabhavali --- */
+function vinayagar(){
+  const A=fiMats(),B=A.brass,D=A.brassAged,H=A.brassHi;
+  const g=new THREE.Group();let y=cap(g,{design:'beads',list:[[.06,B],[.11,M.rudra],[.06,B]]});
+  const I=new THREE.Group();I.position.y=y-.02;g.add(I);
+  // prabhavali (flame arch)
+  const acy=-1.2,rx=.8,ry=1.17,az=-.16,arc=[],arc2=[],fl=[],bd=[];
+  const ep=(a,s=1)=>new V3(Math.cos(a)*rx*s,acy+Math.sin(a)*ry*s,az);
+  for(let i=0;i<=72;i++){const a=-PI/3+i/72*(5*PI/3);arc.push(ep(a));arc2.push(ep(a,.9))}
+  I.add(tube(B,arc,.036,90,10));I.add(tube(D,arc2,.017,90,6));
+  const fs=new THREE.Shape();fs.moveTo(-.05,0);fs.bezierCurveTo(-.075,.07,-.03,.1,-.012,.15);fs.quadraticCurveTo(0,.18,.02,.22);fs.bezierCurveTo(.03,.14,.075,.08,.05,0);fs.quadraticCurveTo(0,-.03,-.05,0);const cone=new THREE.ExtrudeGeometry(fs,{depth:.012,bevelEnabled:true,bevelThickness:.01,bevelSize:.008,bevelSegments:1,curveSegments:5});cone.translate(0,-.02,-.006);
+  for(let i=0;i<=26;i++){const a=-PI/3+.08+i/26*(5*PI/3-.16),n=new V3(Math.cos(a)/rx,Math.sin(a)/ry,0).normalize(),p=ep(a).add(n.clone().multiplyScalar(.02));
+    const sc=Math.abs(a-PI/2)<.05?1.5:1;fl.push([cone,fiMx(p.clone().add(n.clone().multiplyScalar(.03*(sc-1))),fiAlign(n),new V3(sc*.8,sc*.8,sc*.8))]);
+    const b2=ep(a+(5*PI/3-.16)/52,1).add(n.clone().multiplyScalar(.05));if(i<26)bd.push([FI_SPS,fiMx(b2,null,new V3(.026,.026,.026))])}
+  I.add(new THREE.Mesh(fiMerge(fl),B));I.add(new THREE.Mesh(fiMerge(bd),H));
+  I.add(lathe(B,[[.001,-.1],[.05,-.09],[.06,-.05],[.035,0],[.045,.03],[.001,.07]],24,-.02+0*az));
+  // pedestal (padma peetam)
+  const bY=-1.98;
+  I.add(lathe(B,[[.001,-.5],[.7,-.5],[.73,-.47],[.73,-.42],[.7,-.4],[.66,-.37],[.68,-.33],[.64,-.29],[.56,-.25],[.5,-.2],[.49,-.14],[.53,-.08],[.6,-.05],[.62,-.02],[.58,0],[.001,0]],72,bY));
+  I.add(fiTor(H,.715,.018,0,bY-.445,0,PI/2));I.add(fiTor(D,.665,.014,0,bY-.35,0,PI/2));
+  const ps=new THREE.Shape();ps.moveTo(0,0);ps.bezierCurveTo(.07,.02,.07,.1,0,.17);ps.bezierCurveTo(-.07,.1,-.07,.02,0,0);
+  const pg=new THREE.ExtrudeGeometry(ps,{depth:.015,bevelEnabled:true,bevelThickness:.012,bevelSize:.012,bevelSegments:1,curveSegments:5});
+  const pu=[],pd=[];
+  for(let i=0;i<22;i++){const a=i/22*TAU;
+    pu.push([pg,fiMx(new V3(Math.sin(a)*.53,bY-.2,Math.cos(a)*.53),new THREE.Quaternion().setFromEuler(new THREE.Euler(-.35,a,0,'YXZ')))]);
+    const a2=a+TAU/44;pd.push([pg,fiMx(new V3(Math.sin(a2)*.57,bY-.22,Math.cos(a2)*.57),new THREE.Quaternion().setFromEuler(new THREE.Euler(PI+.5,a2,0,'YXZ')),new V3(.9,.8,.9))]);}
+  I.add(new THREE.Mesh(fiMerge(pu),B));I.add(new THREE.Mesh(fiMerge(pd),D));
+  // body volumes
+  const ells=[];const E=(m,r,x,yy,z,sx=1,sy=1,sz=1)=>{ells.push([x,yy,z,r*sx,r*sy,r*sz]);const o=fiSp(m,r,x,yy,z,sx,sy,sz);I.add(o);return o};
+  const zs=(x,yy,o=0)=>{let z=-9;for(const [ex,ey,ez,a,b,c] of ells){const q=1-((x-ex)/a)**2-((yy-ey)/b)**2;if(q>0)z=Math.max(z,ez+c*Math.sqrt(q))}return (z<-8?0:z)+o};
+  E(B,.3,0,-.6,.02,1.02,.95,.92);
+  E(B,.13,-.09,-.46,.08,1,.85,.9);E(B,.13,.09,-.46,.08,1,.85,.9);
+  E(B,.13,0,-.72,.17,1,1.15,.9);E(B,.12,-.12,-.74,.1,1,1,.9);E(B,.12,.12,-.74,.1,1,1,.9);
+  E(B,.28,0,-.99,-.02,1.14,.8,.8);
+  E(B,.42,0,-1.34,.05,1,.9,.86);
+  // crown (kireedam)
+  const cY=-.42;I.add(lathe(B,[[.001,0],[.23,0],[.245,.03],[.23,.06],[.2,.07],[.21,.11],[.175,.13],[.185,.17],[.145,.19],[.155,.23],[.115,.25],[.12,.29],[.08,.31],[.085,.34],[.045,.37],[.06,.39],[.001,.44]],56,cY));
+  [0,.11,.19,.29].forEach((d,i)=>I.add(fiTor(i%2?D:H,[.236,.19,.15,.105][i],.012,0,cY+.03+d,0,PI/2)));
+  {const cb=[];for(let i=0;i<20;i++){const a=i/20*TAU;cb.push([FI_SPS,fiMx(new V3(Math.sin(a)*.23,cY+.005,Math.cos(a)*.23),null,new V3(.022,.022,.022))])}I.add(new THREE.Mesh(fiMerge(cb),H))}
+  I.add(fiTor(H,.045,.012,0,cY+.08,.2,-.25,0,0));I.add(fiSp(A.ruby,.038,0,cY+.08,.205,1,1.15,.5));
+  // ears
+  const ep2=[];for(let i=0;i<72;i++){const t=i/72*TAU,c=Math.cos(t),sn=Math.sin(t),out=Math.max(0,c*.7+sn*.3);let rx2=.21+.05*out,ry2=.3-.04*sn;const w=1+.05*Math.sin(t*9)*out;ep2.push(new V2(.05+c*rx2*w,.0+sn*ry2*w-.06*Math.max(0,-sn)*Math.max(0,c)))}const es=new THREE.Shape(ep2);
+  [-1,1].forEach(s=>{const e=ext(B,es,.03,.022,.02,3,40);e.position.set(s*.38,-.64,-.08);e.rotation.set(0,s*.26,s*-.06);e.scale.set(s*1.12,1.12,1);I.add(e);e.add(tube(H,es.getPoints(40).map(p=>new V3(p.x,p.y,.04)),.014,80,6,true));
+    const e2=ext(D,es,.008,.008,.008,1,24);e2.scale.set(.7,.72,1);e2.position.set(.02,.03,.03);e.add(e2);
+    [.84,.56].forEach(k=>e.add(tube(H,es.getPoints(36).map(p=>new V3(p.x*k+.01,p.y*k+.02,.05)),.008,60,5,true)));
+    e.add(fiSp(H,.03,.02,-.31,.03))});
+  // face details
+  [-1,1].forEach(s=>{I.add(fiSp(D,.04,s*.12,-.585,zs(s*.12,-.585,-.006),1.5,.7,.45));I.add(fiSp(M.ink,.016,s*.12,-.585,zs(s*.12,-.585,.008),1,1,.5));
+    I.add(tap(D,[new V3(s*.05,-.53,zs(s*.05,-.53,.006)),new V3(s*.12,-.52,zs(s*.12,-.52,.008)),new V3(s*.19,-.55,zs(s*.19,-.55,.004))],t=>.012*(1-t*.5),12,6))});
+  [-.465,-.485,-.505].forEach(yy=>I.add(tube(A.vibhuti,[-.1,-.05,0,.05,.1].map(x=>new V3(x,yy+Math.abs(x)*.12,zs(x,yy+Math.abs(x)*.12,.006))),.009,16,6)));
+  I.add(fiSp(M.kumkum,.02,0,-.485,zs(0,-.485,.012),1,1.4,.5));
+  // trunk
+  const tp=[[0,-.57],[0,-.66],[0,-.82],[.02,-.96],[.06,-1.08],[.14,-1.17],[.24,-1.2],[.31,-1.17],[.34,-1.1],[.32,-1.05]];
+  const trr=t=>.085*Math.pow(1-t,1.1)+.028;
+  const tpts=tp.map(([x,yy],i)=>new V3(x,yy,zs(x,yy)+trr(i/(tp.length-1))*.55));
+  I.add(tap(B,tpts,t=>trr(t)*(1+.05*Math.min(1,t*4)*Math.cos(t*TAU*17)),96,12));
+  // tusks
+  I.add(fiPut(new THREE.Mesh(new THREE.ConeGeometry(.028,.07,12),H),new V3(-.1,-.79,zs(-.1,-.79,.02)),fiAlign(new V3(-.3,-1,.6))));
+  I.add(fiPut(new THREE.Mesh(new THREE.ConeGeometry(.03,.16,12),H),new V3(.11,-.83,zs(.11,-.83,.05)),fiAlign(new V3(.3,-1,.7))));
+  // ornaments on torso
+  const surfLine=(pts,r,m,o=.01,seg=40)=>I.add(tube(m,pts.map(([x,yy])=>new V3(x,yy,zs(x,yy,o+r*.4))),r,seg,8));
+  surfLine([[-.3,-.86],[-.2,-.95],[-.08,-1.0],[.08,-1.0],[.2,-.95],[.3,-.86]],.018,H);
+  I.add(fiSp(A.ruby,.035,0,-1.03,zs(0,-1.03,.02),1,1.2,.5));
+  surfLine([[-.27,-.84],[-.18,-1.02],[-.06,-1.2],[.06,-1.36],[.18,-1.5],[.3,-1.62]],.013,H,.012,48);
+  surfLine([[-.4,-1.56],[-.2,-1.64],[0,-1.67],[.2,-1.64],[.4,-1.56]],.024,D);
+  I.add(fiTor(D,.028,.01,0,-1.42,zs(0,-1.42,-.004)));
+  // arms: [path], radii
+  const arm=(pts,r0,r1,bang)=>{const v=pts.map(p=>new V3(...p));I.add(tap(B,v,t=>r0*(1-t)+r1*t,32,12));
+    const band=(i,k,r)=>{const c=v[i].clone().lerp(v[i+1],k),d=v[i+1].clone().sub(v[i]).normalize(),o=fiTor(H,r,.014,c.x,c.y,c.z);o.quaternion.setFromUnitVectors(new V3(0,0,1),d);I.add(o)};
+    band(0,.55,r0*.95);band(v.length-2,.8,r1*1.05);if(bang)band(v.length-2,.65,r1*1.1)};
+  // back arms raised
+  arm([[-.3,-.92,-.1],[-.6,-1.02,-.14],[-.64,-.76,-.1]],.078,.05);I.add(fiSp(B,.065,-.64,-.69,-.09,.85,1.2,.7));
+  arm([[.3,-.92,-.1],[.6,-1.02,-.14],[.64,-.76,-.1]],.078,.05);I.add(fiSp(B,.065,.64,-.69,-.09,.85,1.2,.7));
+  // ankusha (goad) in viewer-left raised hand, pasha (noose) in the right
+  I.add(tube(H,[new V3(-.64,-.94,-.02),new V3(-.64,-.44,-.02)],.013,4,8));
+  I.add(tap(H,[new V3(-.64,-.44,-.02),new V3(-.68,-.36,-.02),new V3(-.74,-.36,-.02),new V3(-.75,-.42,-.02)],t=>.018*(1-t*.6),16,8));
+  I.add(fiPut(new THREE.Mesh(new THREE.ConeGeometry(.024,.08,10),H),new V3(-.64,-.4,-.02)));
+  I.add(fiTor(H,.085,.013,.66,-.55,-.05,0,.3,0));I.add(tube(H,[new V3(.66,-.64,-.05),new V3(.7,-.8,-.03),new V3(.68,-.9,-.02)],.011,12,6));
+  // front arms: abhaya (blessing) palm + modak hand
+  arm([[-.33,-1.0,.08],[-.58,-1.3,.14],[-.5,-1.1,.3]],.085,.055,1);
+  I.add(fiSp(B,.07,-.49,-1.03,.33,.95,1.2,.45));
+  for(let k=0;k<4;k++){const fx=-.535+k*.028;I.add(tap(B,[new V3(fx,-.98,.34),new V3(fx+.002,-.92+Math.abs(k-1.5)*-.012,.345)],t=>.015*(1-t*.3),6,6))}
+  I.add(tap(B,[new V3(-.43,-1.05,.33),new V3(-.4,-.99,.34)],t=>.016,4,6));
+  arm([[.33,-1.0,.08],[.6,-1.32,.14],[.42,-1.36,.34]],.085,.055,1);
+  I.add(fiSp(B,.072,.39,-1.37,.4,1.2,.8,.9));
+  const mk=lathe(H,[[.001,0],[.06,.008],[.075,.035],[.062,.075],[.032,.105],[.001,.135]],16,0);mk.position.set(.39,-1.33,.45);mk.scale.setScalar(.85);I.add(mk);
+  // crossed legs
+  const leg=(pts,r0,r1)=>{I.add(tap(B,pts.map(p=>new V3(...p)),t=>r0*(1-t)+r1*t,32,14))};
+  leg([[.2,-1.7,.02],[.5,-1.8,.2],[.46,-1.86,.36],[.1,-1.88,.44],[-.1,-1.87,.46]],.15,.06);
+  leg([[-.2,-1.72,.02],[-.5,-1.83,.22],[-.46,-1.89,.4],[-.08,-1.92,.5],[.12,-1.91,.52]],.15,.06);
+  I.add(fiSp(B,.07,-.13,-1.86,.47,1.3,.7,.9));I.add(fiSp(B,.07,.15,-1.9,.53,1.3,.7,.9));
+  I.add(fiTor(H,.07,.012,.34,-1.87,.42,0,1.2,0));I.add(fiTor(H,.07,.012,-.3,-1.91,.47,0,-1.2,0));
+  return g;
+}
+/* --- Peacock feather: fine-barbed feather with iridescent eye, in a gold minakari ferrule --- */
+let FI_PEA=null;
+function fiPeacockTex(){
+  const W=512,H=1024,cx=256,ey=800,barbs=[];
+  const hw=yy=>{if(yy<540){const t=(yy-70)/470;return 50+150*Math.sin(Math.max(0,t)*PI*.5)}const q=(yy-ey+40)/250;return 205*Math.sqrt(Math.max(0,1-Math.min(1,q*q)))};
+  for(let yy=70;yy<1012;yy+=1.6)for(const s of [-1,1]){
+    const wisp=yy<560,keep=wisp?rnd()<.8:true;if(!keep)continue;
+    let L=hw(yy)*(.9+rnd()*.16);if(L<6)continue;
+    const dr=wisp?.55+rnd()*.25:.42;
+    barbs.push({yy,s,L,dr,wav:wisp?(rnd()-.5)*30:(rnd()-.5)*5,wisp,c:rnd()});
+  }
+  const path=(x,b)=>{x.beginPath();x.moveTo(cx+b.s*2,b.yy);x.quadraticCurveTo(cx+b.s*b.L*.5,b.yy+b.L*b.dr*.25+b.wav,cx+b.s*b.L,b.yy+b.L*b.dr)};
+  const eye=[[152,178,800,'#8f5a22'],[134,158,794,'#a7922c'],[116,138,787,'#2c9a4a'],[98,118,781,'#12a69a'],[80,98,775,'#1fb6c8'],[66,82,769,'#7a5424'],[54,68,766,'#0d1f7a']];
+  const paint=(x,bump)=>{
+    x.clearRect(0,0,W,H);x.lineCap='round';
+    x.fillStyle=bump?'rgba(255,255,255,.45)':'#3f7a2a';x.beginPath();for(let yy=560;yy<=1000;yy+=4)x.lineTo(cx+hw(yy)*.86,yy+hw(yy)*.3);for(let yy=1000;yy>=560;yy-=4)x.lineTo(cx-hw(yy)*.86,yy+hw(yy)*.3);x.fill();
+    for(const b of barbs){
+      if(bump)x.strokeStyle=`rgba(255,255,255,${b.wisp?.8:.6})`;
+      else if(b.wisp)x.strokeStyle=`rgba(${120+b.c*70|0},${130+b.c*40|0},${30+b.c*25|0},${.8+b.c*.2})`;
+      else x.strokeStyle=`rgb(${50+b.c*90|0},${110+b.c*60|0},${30+b.c*25|0})`;
+      x.lineWidth=b.wisp?2:2.4;path(x,b);x.stroke()}
+    if(!bump){
+      x.save();x.globalCompositeOperation='source-atop';
+      for(const [rx,ry,yc,col] of eye){x.filter='blur(2.5px)';x.fillStyle=col;x.beginPath();x.ellipse(cx,yc,rx,ry,0,0,TAU);x.fill()}
+      x.filter='blur(3px)';x.fillStyle='#0a1250';x.beginPath();x.ellipse(cx,752,26,22,0,0,TAU);x.fill();
+      x.filter='none';
+      for(const b of barbs){if(b.yy<600)continue;x.strokeStyle=b.c<.5?'rgba(0,0,0,.22)':'rgba(255,255,255,.14)';x.lineWidth=.9;path(x,b);x.stroke()}
+      const gl=x.createLinearGradient(0,0,W,0);gl.addColorStop(0,'rgba(255,220,120,.12)');gl.addColorStop(.5,'rgba(0,0,0,0)');gl.addColorStop(1,'rgba(90,255,200,.1)');x.fillStyle=gl;x.fillRect(0,0,W,H);
+      x.restore();
+    }
+    x.strokeStyle=bump?'#fff':'#d8c48e';for(let yy=40;yy<760;yy+=4){x.lineWidth=4.5-yy/760*3;x.beginPath();x.moveTo(cx,yy);x.lineTo(cx,yy+5);x.stroke()}
+  };
+  const map=canvasTex(W,H,x=>paint(x,false),true),bump=canvasTex(W,H,x=>{x.fillStyle='#000';x.fillRect(0,0,W,H);const c=document.createElement('canvas');c.width=W;c.height=H;paint(c.getContext('2d'),true);x.drawImage(c,0,0)});
+  return{map,bump};
+}
+function peacock(){
+  FI_PEA=FI_PEA||fiPeacockTex();const A=fiMats();
+  const g=new THREE.Group();let y=cap(g,{design:'beads',list:[[.06,M.gold],[.1,A.peacockBlue],[.06,M.gold]]});
+  const fy=y;g.add(lathe(A.gold,[[.001,-.34],[.028,-.34],[.04,-.31],[.052,-.24],[.058,-.16],[.07,-.12],[.072,-.07],[.06,-.03],[.04,0],[.001,.0]],40,fy));
+  g.add(fiTor(A.emerald,.066,.014,0,fy-.1,0,PI/2));g.add(fiTor(A.gold,.07,.009,0,fy-.13,0,PI/2));
+  {const b=[];for(let i=0;i<14;i++){const a=i/14*TAU;b.push([FI_SPS,fiMx(new V3(Math.sin(a)*.06,fy-.045,Math.cos(a)*.06),null,new V3(.014,.014,.014))])}g.add(new THREE.Mesh(fiMerge(b),A.gold))}
+  const W=1.02,L=2.1,top=fy-.22;
+  const geo=new THREE.PlaneGeometry(W,L,14,48);geo.translate(0,-L/2,0);const p=geo.attributes.position;
+  const zf=(x,v)=>.13*Math.sin(PI*v*.9)-.16*(x/(W/2))**2*v+.02*Math.sin(v*9);
+  for(let i=0;i<p.count;i++){const x=p.getX(i),yy=p.getY(i),v=-yy/L;p.setXYZ(i,x+.07*v*v,yy+top,zf(x,v))}
+  geo.computeVertexNormals();
+  const fm=mat({map:FI_PEA.map,bumpMap:FI_PEA.bump,bumpScale:.5,alphaTest:.35,transparent:true,side:THREE.DoubleSide,roughness:.42,metalness:.15,clearcoat:.6,clearcoatRoughness:.3,emissive:0xffffff,emissiveMap:FI_PEA.map,emissiveIntensity:.14},true);
+  g.add(new THREE.Mesh(geo,fm));
+  const rp=[];for(let i=0;i<=16;i++){const v=i/16*.73;rp.push(new V3(.07*v*v,top-v*L+.12,zf(0,v)+.006))}
+  g.add(tap(P(0xcdb888,{roughness:.35,clearcoat:.6}),rp,t=>.016*(1-t)+.003,48,8));
+  return g;
+}
+/* --- Malli poo: a loop of hand-tied Madurai jasmine buds with a kanakambaram knot --- */
+let FI_JAS=null;
+function fiJasGeos(){
+  const cream=fiLin(0xf7f2e4),green=fiLin(0x86a24a),tipc=fiLin(0xfdfbf2);
+  const bud=fiLatheC([[.001,0],[.011,.02],[.017,.075],[.029,.11],[.034,.14],[.029,.176],[.013,.207],[.001,.224]],8,
+    yy=>yy<.06?green.clone().lerp(cream,Math.max(0,(yy-.025)/.035)):cream.clone().lerp(tipc,Math.min(1,(yy-.12)/.1)),
+    (r,a,yy)=>[r*(1+.09*Math.cos(5*(a+yy*7))*Math.min(1,Math.max(0,(yy-.08)/.06))),a+yy*5]);
+  const flower=(pc,cc,n,Lp,Wp)=>{const parts=[];
+    for(let k=0;k<n;k++){const a=k/n*TAU,pg=fiSurf(4,5,(u,v)=>{const s=u*2-1,w=Wp*Math.sin(PI*Math.min(.97,.1+v*.9))*(1-.2*v);return[s*w,.012+v*Lp,-.03*(s*s)+.02*v*v]},(u,v)=>cc.clone().lerp(pc,Math.min(1,v*3)));
+      parts.push([pg,fiMx(new V3(0,.06,0),new THREE.Quaternion().setFromEuler(new THREE.Euler(-PI/2+.25,a,0,'YXZ')))])}
+    parts.push([fiLatheC([[.001,0],[.01,.004],[.012,.04],[.02,.062],[.001,.066]],8,yy=>yy<.03?green:cc),null]);
+    return fiMerge(parts)};
+  return{bud,open:flower(cream,fiLin(0xf3f0c8),5,.055,.028),kanaka:flower(fiLin(0xff8433),fiLin(0xffc070),5,.075,.042)};
+}
+function mallipoo(){
+  FI_JAS=FI_JAS||fiJasGeos();shared.add(FI_JAS.bud);shared.add(FI_JAS.open);shared.add(FI_JAS.kanaka);
+  const g=new THREE.Group();let y=cap(g,{design:'beads',list:[[.06,M.gold],[.09,M.pearl],[.06,M.gold]]});
+  const y0=y-.12,K=.58,Hh=.86,N=400,pts=[];
+  for(let i=0;i<=N;i++){const a=i/N*TAU;pts.push(new V3(K*Math.sin(a)*Math.pow(Math.sin(a/2),.85),y0-Hh*(1-Math.cos(a)),0))}
+  const cum=[0];for(let i=1;i<=N;i++)cum.push(cum[i-1]+pts[i].distanceTo(pts[i-1]));const Ltot=cum[N];
+  const atS=s0=>{let i=1;while(i<N&&cum[i]<s0)i++;const f=(s0-cum[i-1])/(cum[i]-cum[i-1]);return[pts[i-1].clone().lerp(pts[i],f),pts[i].clone().sub(pts[i-1]).normalize()]};
+  const buds=[],opens=[],kan=[],Z=new V3(0,0,1),step=.043;
+  let st=0;
+  for(let s0=.14;s0<Ltot-.14;s0+=step,st++){
+    const [p,T]=atS(s0),N2=new V3(-T.y,T.x,0),kz=Math.abs(s0-Ltot/2)<.15;
+    for(let k=0;k<3;k++){const ph=st*.9+k*TAU/3+(rnd()-.5)*.3,d=N2.clone().multiplyScalar(Math.cos(ph)).add(Z.clone().multiplyScalar(Math.sin(ph)));
+      const tl=.78+(rnd()-.5)*.2,ax=d.clone().multiplyScalar(Math.cos(tl)).add(T.clone().multiplyScalar(Math.sin(tl))).normalize();
+      const q=fiAlign(ax).multiply(new THREE.Quaternion().setFromAxisAngle(new V3(0,1,0),rnd()*TAU)),sc=.98+rnd()*.24,pos=p.clone().add(d.clone().multiplyScalar(.016));
+      const r=rnd();if(kz)kan.push([FI_JAS.kanaka,fiMx(pos,fiAlign(d.clone().add(T.clone().multiplyScalar(.3))),new V3(1.25,1.25,1.25))]);
+      else if(r<.1&&d.z>-.3)opens.push([FI_JAS.open,fiMx(pos,q,new V3(sc,sc,sc))]);
+      else{const tv=rnd();buds.push([FI_JAS.bud,fiMx(pos,q,new V3(sc,sc*(.9+rnd()*.2),sc)),tv<.22?fiLin(0xeef2d6):tv<.5?fiLin(0xfff8ec):null])}}
+  }
+  const jm=mat({vertexColors:true,roughness:.5,clearcoat:.25,clearcoatRoughness:.4,sheen:new THREE.Color(0xffffff),emissive:0x14120e},true);
+  g.add(new THREE.Mesh(fiMerge(buds),jm));if(opens.length)g.add(new THREE.Mesh(fiMerge(opens),jm));if(kan.length)g.add(new THREE.Mesh(fiMerge(kan),jm));
+  const thr=[];for(let s0=0;s0<=Ltot;s0+=Ltot/80)thr.push(atS(Math.min(s0,Ltot-.001))[0]);
+  g.add(tube(mat({color:0x8b9656,roughness:.8}),thr,.018,120,6));
+  g.add(lathe(M.gold,[[.001,-.16],[.05,-.15],[.085,-.1],[.09,-.05],[.06,-.01],[.03,0],[.001,.01]],32,y0+.04));
+  g.add(fiTor(M.goldDark,.088,.01,0,y0-.06,0,PI/2));
+  return g;
+}
+/* --- Kolam medallion: cloisonne rangoli lotus on a kaavi-red kolam field --- */
+let FI_KOL=null;
+function fiKolamTex(){
+  const S=1024,c=S/2,paint=(x,bump)=>{
+    if(bump){x.fillStyle='#000';x.fillRect(0,0,S,S)}else{const gr=x.createRadialGradient(c,c,0,c,c,c);gr.addColorStop(0,'#86201a');gr.addColorStop(.7,'#6e1812');gr.addColorStop(1,'#4c0f0b');x.fillStyle=gr;x.fillRect(0,0,S,S)}
+    const W=bump?'#fff':'#f7f0e0';x.strokeStyle=W;x.fillStyle=W;x.lineCap='round';
+    const R0=455,n=24;
+    for(const ph of [0,PI]){x.lineWidth=7;x.beginPath();for(let i=0;i<=720;i++){const a=i/720*TAU,r=R0+26*Math.sin(a*n+ph);const X=c+Math.cos(a)*r,Y=c+Math.sin(a)*r;i?x.lineTo(X,Y):x.moveTo(X,Y)}x.stroke()}
+    for(let i=0;i<n;i++){const a=(i+.25)/n*TAU;x.beginPath();x.arc(c+Math.cos(a)*(R0),c+Math.sin(a)*(R0),6,0,TAU);x.fill();
+      const a2=(i+.75)/n*TAU;x.beginPath();x.arc(c+Math.cos(a2)*(R0+46),c+Math.sin(a2)*(R0+46),5,0,TAU);x.fill();x.beginPath();x.arc(c+Math.cos(a2)*(R0-46),c+Math.sin(a2)*(R0-46),5,0,TAU);x.fill()}
+    x.lineWidth=4;[395,500].forEach(r=>{x.beginPath();x.arc(c,c,r,0,TAU);x.stroke()});
+    for(let i=0;i<16;i++){const a=(i+.5)/16*TAU;for(let k=0;k<3;k++){const r=250+k*45;x.beginPath();x.arc(c+Math.cos(a)*r,c+Math.sin(a)*r,7-k,0,TAU);x.fill()}
+      x.lineWidth=4;x.beginPath();x.arc(c+Math.cos(a)*340,c+Math.sin(a)*340,24,0,TAU);x.stroke()}
+    if(!bump){x.globalAlpha=.07;for(let i=0;i<5000;i++){x.fillStyle=rnd()<.5?'#000':'#fff';x.fillRect(rnd()*S,rnd()*S,2,2)}x.globalAlpha=1}
+  };
+  return{map:canvasTex(S,S,x=>paint(x,false),true),bump:canvasTex(S,S,x=>paint(x,true))};
+}
+function kolam(){
+  FI_KOL=FI_KOL||fiKolamTex();const A=fiMats();
+  const en=c=>P(c,{roughness:.14,clearcoat:1,clearcoatRoughness:.05});
+  const g=new THREE.Group();let y=cap(g,{design:'beads',list:[[.06,M.gold],[.1,en(0xc81e5a)],[.06,M.gold]]});
+  g.add(fiTor(capMetal(),.1,.03,0,y-.06,0,0,PI/2));
+  const R=.8,K=new THREE.Group();K.position.y=y-.13-R;g.add(K);
+  const circ=r=>{const s=new THREE.Shape();s.absarc(0,0,r,0,TAU,false);return s};
+  K.add(ext(A.gold,circ(R-.02),.06,.025,.025,3,72));
+  K.add(fiTor(A.gold,R,.042,0,0,0));
+  {const b=[];for(let i=0;i<48;i++){const a=i/48*TAU;b.push([FI_SPS,fiMx(new V3(Math.cos(a)*(R-.075),Math.sin(a)*(R-.075),.058),null,new V3(.021,.021,.021))])}K.add(new THREE.Mesh(fiMerge(b),A.gold))}
+  const field=new THREE.Mesh(new THREE.CircleGeometry(R-.1,96),P(0xffffff,{map:FI_KOL.map,bumpMap:FI_KOL.bump,bumpScale:.9,roughness:.3,clearcoat:1,clearcoatRoughness:.1}));field.position.z=.058;K.add(field);
+  const back=new THREE.Mesh(new THREE.CircleGeometry(R-.1,96),field.material);back.position.z=-.058;back.rotation.y=PI;K.add(back);
+  const Z3=new V3(0,0,1);
+  const petal=(len,w)=>{const s=new THREE.Shape();s.moveTo(0,0);s.bezierCurveTo(w,len*.18,w*.92,len*.66,0,len);s.bezierCurveTo(-w*.92,len*.66,-w,len*.18,0,0);return s};
+  const layer=(n,r0,len,w,off,col,z,dots)=>{
+    const eg=new THREE.ExtrudeGeometry(petal(len,w),{depth:.022,bevelEnabled:true,bevelThickness:.012,bevelSize:.01,bevelSegments:2,curveSegments:9});
+    const og=new THREE.ExtrudeGeometry(petal(len+.045,w+.024),{depth:.012,bevelEnabled:true,bevelThickness:.008,bevelSize:.008,bevelSegments:1,curveSegments:9});og.translate(0,-.022,0);
+    const L1=[],L2=[],L3=[];for(let i=0;i<n;i++){const a=off+i/n*TAU,q=new THREE.Quaternion().setFromAxisAngle(Z3,a-PI/2),p=new V3(Math.cos(a)*r0,Math.sin(a)*r0,0);
+      L1.push([eg,fiMx(p.clone().setZ(z+.012),q)]);L2.push([og,fiMx(p.clone().setZ(z-.004),q)]);
+      if(dots)L3.push([FI_SPS,fiMx(new V3(Math.cos(a)*(r0+len+.06),Math.sin(a)*(r0+len+.06),.07),null,new V3(.022,.022,.012))])}
+    K.add(new THREE.Mesh(fiMerge(L2),A.gold));K.add(new THREE.Mesh(fiMerge(L1),en(col)));
+    if(dots)K.add(new THREE.Mesh(fiMerge(L3),en(0xf8f2e4)));
+  };
+  layer(16,.33,.24,.07,TAU/32,0xc0124e,.07,true);
+  layer(8,.13,.3,.115,0,0xe8680a,.1);
+  layer(8,.12,.19,.065,TAU/16,0x0a7d58,.13);
+  layer(8,.07,.12,.05,0,0xf2b10a,.16);
+  const boss=lathe(A.gold,[[.001,0],[.1,0],[.105,.02],[.09,.04],[.001,.045]],40);boss.position.z=.17;boss.rotation.x=PI/2;K.add(boss);
+  K.add(fiSp(A.ruby,.068,0,0,.225,1,1,.55));
+  {const b=[];for(let i=0;i<14;i++){const a=i/14*TAU;b.push([FI_SPS,fiMx(new V3(Math.cos(a)*.088,Math.sin(a)*.088,.215),null,new V3(.014,.014,.014))])}K.add(new THREE.Mesh(fiMerge(b),A.brassHi))}
+  return g;
+}
+/* --- Kalash: brass kalasam with mango leaves, husked coconut, vibhuti & kumkum --- */
+let FI_COCO=null;
+function kalash(){
+  const A=fiMats(),B=A.brass,D=A.brassAged;
+  FI_COCO=FI_COCO||canvasTex(512,256,(x,w,h)=>{x.fillStyle='#7a4a22';x.fillRect(0,0,w,h);for(let i=0;i<2600;i++){const px=rnd()*w,l=10+rnd()*60,py=rnd()*h,v=rnd();x.strokeStyle=v<.5?`rgba(60,32,12,${.3+v*.5})`:`rgba(190,140,80,${.15+(v-.5)*.5})`;x.lineWidth=.8+rnd()*1.6;x.beginPath();x.moveTo(px,py);x.lineTo(px+(rnd()-.5)*6,py+l);x.stroke()}},true,true);
+  const coir=mat({map:FI_COCO,bumpMap:FI_COCO,bumpScale:.6,roughness:.9,sheen:new THREE.Color(0x8a6040)},true);
+  const g=new THREE.Group();let y=cap(g,{design:'kalava'});const K=new THREE.Group();K.position.y=y-.02;g.add(K);
+  const coY=-.38;K.add(fiSp(coir,.3,0,coY,0,1,1.22,1));
+  const tuft=[];for(let i=0;i<34;i++){const a=rnd()*TAU,r=rnd()*.05,h=.05+rnd()*.07,p0=new V3(Math.cos(a)*r,coY+.35,Math.sin(a)*r);
+    tuft.push([taper([p0,p0.clone().add(new V3(Math.cos(a)*.03,h*.6,Math.sin(a)*.03)),p0.clone().add(new V3(Math.cos(a)*(.05+rnd()*.04),h,Math.sin(a)*(.05+rnd()*.04)))],t=>.012*(1-t)+.003,8,5),null])}
+  K.add(new THREE.Mesh(fiMerge(tuft),mat({color:0x6a4020,roughness:.9})));
+  K.add(fiSp(M.kumkum,.03,0,coY+.02,.295,1,1.3,.35));
+  const rimY=-.64,prof=[[.001,-1.38],[.25,-1.38],[.28,-1.35],[.27,-1.31],[.21,-1.27],[.23,-1.22],[.35,-1.14],[.5,-1.02],[.6,-.86],[.635,-.7],[.61,-.54],[.51,-.41],[.35,-.3],[.225,-.24],[.19,-.16],[.2,-.08],[.25,-.03],[.295,0],[.285,.03],[.24,.03],[.2,.0]];
+  {const cr=new THREE.SplineCurve(prof.map(p=>new V2(p[0],p[1]))),sp=cr.getPoints(110).map(p=>[p.x,p.y]);sp[0]=[.001,-1.38];K.add(lathe(B,sp,96,rimY))}
+  const rAt=yy=>{const r=yy-rimY;for(let i=1;i<prof.length;i++){const [a0,b0]=prof[i-1],[a1,b1]=prof[i];if((r-b0)*(r-b1)<=0&&b1!==b0)return a0+(a1-a0)*(r-b0)/(b1-b0)}return .3};
+  [[-.36,D,.014],[-.33,A.brassHi,.01],[-1.06,D,.014],[-1.1,A.brassHi,.01]].forEach(([d,m,t])=>{const yy=rimY+d;K.add(fiTor(m,rAt(yy)+.004,t,0,yy,0,PI/2))});
+  {const b=[];const yy=rimY-.4;for(let i=0;i<40;i++){const a=i/40*TAU,r=rAt(yy)+.006;b.push([FI_SPS,fiMx(new V3(Math.sin(a)*r,yy,Math.cos(a)*r),null,new V3(.018,.018,.018))])}K.add(new THREE.Mesh(fiMerge(b),A.brassHi))}
+  [-.64,-.7,-.76].forEach(d=>{const yy=rimY+d,pp=[];for(let i=0;i<=16;i++){const a=-.62+i/16*1.24,r=rAt(yy)+.006;pp.push(new V3(Math.sin(a)*r,yy+Math.sin(i*1.7)*.003,Math.cos(a)*r))}K.add(tap(A.vibhuti,pp,t=>.022*Math.pow(Math.sin(PI*Math.min(.98,.03+t)),.4),40,6))});
+  {const yy=rimY-.7;K.add(fiSp(M.kumkum,.045,0,yy,rAt(yy)+.012,1,1.1,.35))}
+  [[0xc8141c,0],[0xf2b705,PI]].forEach(([c,ph])=>{const pp=[];for(let i=0;i<=90;i++){const t=i/90,a=t*TAU*4+ph,yy=rimY-.13-t*.1;pp.push(new V3(Math.sin(a)*(rAt(yy)+.012),yy,Math.cos(a)*(rAt(yy)+.012)))}K.add(tube(cordMat(c),pp,.012,180,6))});
+  const lg=[],lgeo=(L,W)=>fiSurf(6,16,(u,v)=>{const s=u*2-1,w=W*Math.pow(Math.sin(PI*Math.min(.995,Math.pow(v,.8))),.85)+.003;return[s*w,v*L,.3*Math.abs(s)*w-.2*v*v]});
+  const LG1=lgeo(.66,.19),LG2=lgeo(.56,.17),up=new V3(0,1,0);
+  for(let k=0;k<11;k++){const a=k/11*TAU+.17,front=Math.cos(a),e=.55-front*.5+(k%2)*.12,dir=new V3(Math.sin(a)*Math.cos(e),Math.sin(e),Math.cos(a)*Math.cos(e));
+    const X=dir.clone().cross(up).normalize(),Zz=X.clone().cross(dir).normalize(),m=new THREE.Matrix4().makeBasis(X,dir,Zz);m.setPosition(Math.sin(a)*.17,rimY+.02,Math.cos(a)*.17);lg.push([k%2?LG2:LG1,m])}
+  K.add(new THREE.Mesh(fiMerge(lg),A.leaf));
+  return g;
+}
+/* --- Lotus: layered pink tamarai on a lily pad with a dew drop --- */
+let FI_LOT=null;
+function fiLotusTex(){
+  const vein=canvasTex(64,256,(x,w,h)=>{x.fillStyle='#fff';x.fillRect(0,0,w,h);x.strokeStyle='rgba(170,120,140,.35)';x.lineWidth=1;for(let i=-6;i<=6;i++){x.beginPath();x.moveTo(w/2+i*.8,h);x.quadraticCurveTo(w/2+i*4.6,h*.45,w/2+i*3.2,0);x.stroke()}});
+  const pad=canvasTex(512,256,(x,w,h)=>{const gr=x.createLinearGradient(0,0,0,h);gr.addColorStop(0,'#1a4a1c');gr.addColorStop(.3,'#256a26');gr.addColorStop(.85,'#3f8030');gr.addColorStop(1,'#86a848');x.fillStyle=gr;x.fillRect(0,0,w,h);
+    x.strokeStyle='rgba(170,210,110,.4)';for(let i=0;i<22;i++){const xx=(i+.5)/22*w;x.lineWidth=2.2;x.beginPath();x.moveTo(xx,h);x.lineTo(xx,0);x.stroke();x.lineWidth=.8;for(let k=1;k<5;k++){x.beginPath();x.moveTo(xx,h*k/5);x.lineTo(xx+w/44,h*k/5-14);x.moveTo(xx,h*k/5);x.lineTo(xx-w/44,h*k/5-14);x.stroke()}}
+    x.globalAlpha=.1;for(let i=0;i<3000;i++){x.fillStyle=rnd()<.5?'#000':'#fff';x.fillRect(rnd()*w,rnd()*h,2,2)}},true);
+  return{vein,pad};
+}
+function lotus(){
+  FI_LOT=FI_LOT||fiLotusTex();
+  const g=new THREE.Group();let y=cap(g,{design:'beads',list:[[.06,M.gold],[.1,M.pearl],[.06,M.gold]]});
+  const LG=new THREE.Group();LG.scale.setScalar(1.22);g.add(LG);const F=new THREE.Group(),fy=0;F.position.set(0,fy,.05);F.rotation.x=.42;LG.add(F);
+  const c0=fiLin(0xfff2ea),c1=fiLin(0xf59bbb),c2=fiLin(0xd62f72),gc=fiLin(0xb9d27a);
+  const pgeo=(L,W,cup,back,green)=>fiSurf(8,14,(u,v)=>{const s=u*2-1,w=W*(.16*(1-v)+.84*Math.pow(Math.sin(PI*Math.min(.995,Math.pow(v,1.2))),.72));return[s*w,v*L,cup*(1-s*s)*(w/W)+back*v*v-.012*Math.abs(s)]},
+    (u,v)=>{const s=Math.abs(u*2-1);let c=v<.55?c0.clone().lerp(c1,Math.pow(v/.55,1.4)):c1.clone().lerp(c2,Math.pow((v-.55)/.45,1.2));if(green)c.lerp(gc,.55*(1-v));return c.multiplyScalar(1-.12*s*s)});
+  const parts=[],ring=(n,L,W,th,r0,cup,back,off,green)=>{const geo=pgeo(L,W,cup,back,green);for(let i=0;i<n;i++){const a=off+i/n*TAU;parts.push([geo,fiMx(new V3(Math.sin(a)*r0,0,Math.cos(a)*r0),new THREE.Quaternion().setFromEuler(new THREE.Euler(th+(rnd()-.5)*.08,a+(rnd()-.5)*.1,0,'YXZ')))])}};
+  ring(6,.4,.14,.2,.05,.05,0,0);ring(7,.5,.18,.46,.07,.06,.0,.45);ring(8,.58,.21,.82,.09,.07,.03,.2);ring(8,.57,.21,1.18,.1,.06,.07,.6);ring(5,.44,.16,1.6,.1,.04,.06,.3,true);
+  F.add(new THREE.Mesh(fiMerge(parts),mat({vertexColors:true,map:FI_LOT.vein,roughness:.5,clearcoat:.2,clearcoatRoughness:.5,sheen:new THREE.Color(0xffd0e0),side:THREE.DoubleSide},true)));
+  F.add(lathe(P(0xcfd24e,{roughness:.45,clearcoat:.4}),[[.001,.04],[.07,.06],[.115,.13],[.135,.19],[.13,.21],[.001,.215]],40));
+  {const b=[[FI_SPS,fiMx(new V3(0,.215,0),null,new V3(.022,.01,.022))]];for(let i=0;i<8;i++){const a=i/8*TAU;b.push([FI_SPL,fiMx(new V3(Math.sin(a)*.075,.212,Math.cos(a)*.075),null,new V3(.02,.009,.02))])}F.add(new THREE.Mesh(fiMerge(b),P(0x8a9a2a,{roughness:.5})))}
+  {const st=[],an=[];for(let i=0;i<44;i++){const a=i/44*TAU+rnd()*.1,r0=.1,e=new V3(Math.sin(a)*(.2+rnd()*.03),.19+rnd()*.03,Math.cos(a)*(.2+rnd()*.03));
+    st.push([taper([new V3(Math.sin(a)*r0,.07,Math.cos(a)*r0),new V3(Math.sin(a)*.16,.15,Math.cos(a)*.16),e],()=>.006,6,4),null]);an.push([FI_SPS,fiMx(e,null,new V3(.012,.02,.012))])}
+    F.add(new THREE.Mesh(fiMerge(st),P(0xf6d04a,{roughness:.5})));F.add(new THREE.Mesh(fiMerge(an),P(0xf0a020,{roughness:.5})))}
+  const Pd=new THREE.Group();Pd.position.set(0,fy-.06,-.02);Pd.rotation.x=.42;LG.add(Pd);
+  const R=.74,notch=.35,pg=fiSurf(64,10,(u,v)=>{const a=PI+notch/2+u*(TAU-notch),r=R*Math.max(.02,v);return[Math.sin(a)*r,.06*v*v+.018*Math.sin(a*11)*v*v*v,Math.cos(a)*r]});
+  Pd.add(new THREE.Mesh(pg,P(0xffffff,{map:FI_LOT.pad,roughness:.6,clearcoat:.3,clearcoatRoughness:.35,envMapIntensity:.6,side:THREE.DoubleSide})));
+  const drop=P(0xffffff,{roughness:0,clearcoat:1,clearcoatRoughness:0,transparent:true,opacity:.35,envMapIntensity:3.5});
+  Pd.add(fiSp(drop,.06,.42,.05,.36,1,.6,1));Pd.add(fiSp(drop,.035,-.46,.05,.3,1,.6,1));
+  LG.updateMatrixWorld(true);let my=-9;const tv=new V3();F.traverse(o=>{if(!o.isMesh)return;const p=o.geometry.attributes.position;for(let i=0;i<p.count;i++){tv.fromBufferAttribute(p,i).applyMatrix4(o.matrixWorld);if(tv.y>my)my=tv.y}});LG.position.y=y-.1-my;
+  g.add(fiTor(capMetal(),.07,.018,0,y-.075,-.02,0,PI/2,0));
+  return g;
+}
+/* ==== end Festive India (set A) ==== */
 // @new-charms:A (add set A charm functions above this line)
 //
 /* ---------------- Chai & Snacks (set B) ---------------- */
@@ -1789,6 +2134,7 @@ const COLLECTIONS=[
   {name:'Anime & Japan',items:[['katana','Katana',katana],['ramen','Ramen bowl',ramen],['onigiri','Onigiri',onigiri],['kitsune','Kitsune mask',kitsune],['omamori','Omamori',omamori],['lantern','Paper lantern',lantern]]},
   {name:'Lucky',items:[['daruma','Daruma',daruma],['luckycat','Lucky cat',luckycat],['dice','Fuzzy dice',dice],['clover','Clover in resin',clover],['fortune','Fortune coin',fortune]]},
   {name:'Nature & play',items:[['crystal','Amethyst',crystal],['moonstar','Moon & star',moonstar],['cherries','Cherries',cherries],['cricket','Cricket bat',cricket]]},
+  {name:'Festive India',items:[['vinayagar','Vinayagar',vinayagar],['peacock','Peacock feather',peacock],['mallipoo','Malli poo',mallipoo],['kolam','Kolam medallion',kolam],['kalash','Kalash',kalash],['lotus','Lotus',lotus]]},
   // @collection:A (add set A collection entry above this line)
   //
   {name:'Chai & Snacks',items:[['filtercoffee','Filter coffee',filtercoffee],['cuttingchai','Cutting chai',cuttingchai],['mango','Alphonso mango',mango],['boba','Brown-sugar boba',boba],['donut','Glazed donut',donut],['samosa','Samosa',samosa]]},
