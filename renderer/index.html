@@ -3146,10 +3146,15 @@ if(DEMO){
     if(e.origin!==location.origin)return;const m=e.data||{};
     if(m.type==='charms'){charms.slice().forEach(removeCharm);select(null);charms=demoList(m.charms).map(c=>{const x=makeCharm(c.type,c.axf,c.len);x.pts.at(-1).px-=2+Math.random()*2;return x});wake()}
     if(m.type==='nudge')$('nudge').click();
+    if(m.type==='add'&&LIB.TYPES[m.charm]){const c=makeCharm(m.charm,gapAxf(),m.len||140+Math.random()*110);c.pts.at(-1).px-=3;charms.push(c);wake()}
+    if(m.type==='remove'){const c=charms.find(x=>x.type===m.charm);if(c){if(selected===c)select(null);removeCharm(c);wake()}}
+    if(m.type==='clear'){select(null);charms.slice().forEach(removeCharm)}
+    if(m.type==='sway'){for(const c of charms){const e=c.pts.at(-1);e.px+=m.v*(.6+Math.random()*.4)}wake()}
     if(m.type==='rope'){S.rope=m.rope;syncRopes();wake()}
     if(m.type==='cap'){if(m.design)S.capDesign=m.design;if(m.finish)S.cap=m.finish;buildCaps();rebuildAll()}
   });
   window.charmThumbs=k=>{const t=renderThumbs(k);resize();return t};
+  cv.style.touchAction='pan-y';
 }
 async function init(){
   const th=renderThumbs();
