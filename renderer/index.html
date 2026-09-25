@@ -1276,6 +1276,237 @@ function lantern(){
 
 // @new-charms:A (add set A charm functions above this line)
 //
+/* ---------------- Chai & Snacks (set B) ---------------- */
+let BT=null;
+function bTextures(){
+  if(BT)return BT;BT={};
+  BT.brush=canvasTex(512,512,(x,w,h)=>{x.fillStyle='#d2d2d2';x.fillRect(0,0,w,h);for(let i=0;i<1100;i++){const v=175+rnd()*70|0;x.fillStyle=`rgba(${v},${v},${v},${(.15+rnd()*.35).toFixed(2)})`;const full=rnd()<.4;x.fillRect(full?0:rnd()*w,rnd()*h,full?w:30+rnd()*260,.3+rnd()*.9)}},false,true);
+  const bubbles=(x,w,h,base,ring,hi,n)=>{x.fillStyle=base;x.fillRect(0,0,w,h);for(let i=0;i<n;i++){const r=.8+Math.pow(rnd(),3)*8,px=rnd()*w,py=rnd()*h;x.fillStyle=ring;x.beginPath();x.arc(px,py,r+1.1,0,TAU);x.fill();x.fillStyle=hi;x.beginPath();x.arc(px,py,r,0,TAU);x.fill()}};
+  BT.foam=canvasTex(512,512,(x,w,h)=>{bubbles(x,w,h,'#b07c4c','rgba(90,48,18,.4)','rgba(214,176,128,.85)',3200);x.fillStyle='rgba(95,50,20,.14)';for(let i=0;i<70;i++){x.beginPath();x.ellipse(rnd()*w,rnd()*h,10+rnd()*40,6+rnd()*20,rnd()*3,0,TAU);x.fill()}},true,true);
+  BT.foamB=canvasTex(512,512,(x,w,h)=>bubbles(x,w,h,'#7a7a7a','#2a2a2a','#e0e0e0',2600),false,true);
+  BT.tiger=canvasTex(512,512,(x,w,h)=>{
+    const gr=x.createLinearGradient(0,h,0,0);gr.addColorStop(0,'#3e1c08');gr.addColorStop(.26,'#5e2f10');gr.addColorStop(.44,'#b88256');gr.addColorStop(.62,'#dcb68c');gr.addColorStop(1,'#e8cba6');x.fillStyle=gr;x.fillRect(0,0,w,h);
+    x.filter='blur(5px)';x.lineCap='round';
+    for(let k=0;k<30;k++){const x0=rnd()*w,top=h*(.05+rnd()*.5),ph=rnd()*TAU,amp=3+rnd()*9,fq=2+rnd()*4,wd=6+rnd()*16;
+      for(const off of [-w,0,w])for(let s=0;s<20;s++){const t0=s/20,t1=(s+1)/20,y0=h*.72-(h*.72-top)*t0,y1=h*.72-(h*.72-top)*t1;
+        x.strokeStyle=`rgba(${90+rnd()*25|0},${42+rnd()*12|0},14,${(.6*(1-t0)+.08).toFixed(2)})`;x.lineWidth=wd*(1-t0*.8);
+        x.beginPath();x.moveTo(off+x0+Math.sin(ph+t0*fq)*amp,y0);x.lineTo(off+x0+Math.sin(ph+t1*fq)*amp,y1);x.stroke()}}
+    x.filter='none';x.fillStyle='rgba(255,240,220,.06)';for(let i=0;i<400;i++)x.fillRect(rnd()*w,rnd()*h,2,6)},true,true);
+  BT.teaTop=canvasTex(256,256,(x,w,h)=>{const r=x.createRadialGradient(128,128,10,128,128,128);r.addColorStop(0,'#b8743a');r.addColorStop(.7,'#c98a4e');r.addColorStop(.9,'#e2b784');r.addColorStop(1,'#f0d2a8');x.fillStyle=r;x.fillRect(0,0,w,h);
+    for(let i=0;i<260;i++){const a=rnd()*TAU,rr=(.72+rnd()*.28)*124,s=.6+rnd()*2.8;x.fillStyle=`rgba(250,232,205,${(.3+rnd()*.5).toFixed(2)})`;x.beginPath();x.arc(128+Math.cos(a)*rr,128+Math.sin(a)*rr,s,0,TAU);x.fill()}
+    x.strokeStyle='rgba(240,210,170,.35)';x.lineWidth=2;for(let i=0;i<6;i++){x.beginPath();x.arc(128+rnd()*30-15,128+rnd()*30-15,30+rnd()*60,rnd()*6,rnd()*6+2);x.stroke()}},true);
+  BT.steel=mat({color:0xd6dade,metalness:1,roughness:.26,roughnessMap:BT.brush,bumpMap:BT.brush,bumpScale:.0006,envMapIntensity:1.4});
+  BT.steelIn=mat({color:0xb9bec4,metalness:1,roughness:.36,roughnessMap:BT.brush,envMapIntensity:1.1});
+  BT.ball=new THREE.SphereGeometry(1,14,10);BT.tiny=new THREE.SphereGeometry(1,10,7);shared.add(BT.ball);shared.add(BT.tiny);
+  {const pr=[];for(let i=0;i<=6;i++){const a=-PI/2+i/6*PI;pr.push(new V2(Math.max(.0001,Math.cos(a)),(a<0?-1:1)*1.6+Math.sin(a)))}BT.sprinkle=new THREE.LatheGeometry(pr,6);BT.sprinkle.scale(.017,.017,.017);shared.add(BT.sprinkle)}
+  return BT;
+}
+function bGlass(color,opacity,edge,o={}){const m=P(color,Object.assign({roughness:.03,clearcoat:1,clearcoatRoughness:.02,transparent:true,opacity,depthWrite:false,envMapIntensity:3},o));
+  m.onBeforeCompile=s=>{s.fragmentShader=s.fragmentShader.replace('#include <dithering_fragment>','#include <dithering_fragment>\n{float bF=pow(1.0-abs(dot(geometry.normal,geometry.viewDir)),2.2);gl_FragColor.a=clamp(gl_FragColor.a+bF*'+edge.toFixed(3)+',0.0,1.0);}')};
+  m.customProgramCacheKey=()=>'bglass'+edge;return m}
+function bArc(cx,cy,r,a0,a1,n){const o=[];for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;o.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r])}return o}
+function bPlace(F,A,y){F.updateMatrix();const p=A.clone().applyEuler(F.rotation);F.position.set(-p.x,y-p.y,-p.z)}
+function bHang(g,accent){const y=cap(g,{design:'beads',list:[[.06,M.gold],[.1,accent],[.06,M.gold]]});g.add(tor(capMetal(),.085,.024,0,y-.07,0,0,PI/2));return y-.165}
+function bPinCup(g,y){g.add(tor(capMetal(),.03,.012,0,y+.02,0));g.add(lathe(capMetal(),[[.001,-.075],[.062,-.075],[.058,-.05],[.04,-.025],[.022,-.006],[.018,.004],[.001,.006]],32,y));return y-.075}
+function bUV(geo,k){const p=geo.attributes.position,uv=geo.attributes.uv;for(let i=0;i<p.count;i++)uv.setXY(i,.5+p.getX(i)*k,.5+p.getZ(i)*k);uv.needsUpdate=true;return geo}
+function bLeafGeo(len,wid,fold,curl){
+  const nu=28,nv=8,pos=[],uv=[],idx=[];
+  for(let i=0;i<=nu;i++){const t=i/nu,w=wid*Math.pow(Math.sin(PI*Math.min(1,Math.pow(t,.75))),.85);
+    for(let j=0;j<=nv;j++){const s=j/nv*2-1;pos.push(t*len,-curl*t*t*len+fold*Math.abs(s)*w-.02*t*Math.sin(PI*s),s*w);uv.push(t,j/nv)}}
+  for(let i=0;i<nu;i++)for(let j=0;j<nv;j++){const a=i*(nv+1)+j,b=a+nv+1;idx.push(a,b,a+1,b,b+1,a+1)}
+  const g=new THREE.BufferGeometry();g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));g.setAttribute('uv',new THREE.Float32BufferAttribute(uv,2));g.setIndex(idx);g.computeVertexNormals();return g;
+}
+
+/* South Indian filter coffee: brushed-steel tumbler standing in its davara, frothy decoction on top */
+function filtercoffee(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0x5a2a0e,{roughness:.08,clearcoat:1}));y=bPinCup(g,y);
+  const F=new THREE.Group();g.add(F);const st=T.steel,si=T.steelIn;
+  // davara (wide saucer-bowl with rolled lip)
+  const dv=[[.001,0],[.4,0],[.46,.01],[.5,.04],[.525,.1],[.54,.19],[.55,.28],[.56,.33],...bArc(.59,.35,.03,PI*1.05,PI*2.3,8),[.565,.34],[.535,.29],[.522,.19],[.505,.11],[.47,.06],[.4,.036],[.001,.034]];
+  F.add(lathe(st,dv,72));
+  F.add(tor(st,.4,.012,0,.004,0,PI/2));F.add(tor(st,.548,.006,0,.25,0,PI/2));
+  const pool=new THREE.Mesh(new THREE.CircleGeometry(.5,72),P(0x3a1806,{roughness:.04,clearcoat:1,clearcoatRoughness:.02}));pool.rotation.x=-PI/2;pool.position.y=.1;F.add(pool);
+  // tumbler
+  const H=1.02,r0=.255,r1=.312,out=[[.001,.04],[.2,.04],[.232,.046],[.25,.062],[.256,.085],[.252,.105],[.258,.128]];
+  for(let i=0;i<=26;i++){const t=i/26,yy=.15+t*(H-.15);let r=r0+(r1-r0)*Math.pow(t,1.1);r+=.007*Math.exp(-(((yy-.86)/.012)**2))+.007*Math.exp(-(((yy-.9)/.012)**2));out.push([r,yy])}
+  out.push(...bArc(r1+.006,H+.018,.018,-PI*.45,PI*1.1,8));
+  for(let i=0;i<=8;i++){const t=i/8,yy=H-t*(H-.14);out.push([r1-.014-(r1-r0)*t,yy])}
+  out.push([.2,.13],[.001,.13]);
+  const tb=lathe(st,out,72);F.add(tb);
+  // foam dome
+  const fr=r1-.012,fp=[];for(let i=0;i<=16;i++){const t=i/16,r=fr*(1-t)+.001;fp.push([r+(i===0?.004:0),H-.01+.14*Math.pow(1-(r/fr)**2,.55)])}
+  const foamGeo=bUV(new THREE.LatheGeometry(fp.map(p=>new V2(p[0],p[1])),72),.9);
+  const foam=new THREE.Mesh(foamGeo,mat({map:T.foam,bumpMap:T.foamB,bumpScale:.012,roughness:.55,clearcoat:.25,clearcoatRoughness:.5},true));F.add(foam);
+  const bub=P(0xd8b48a,{roughness:.04,clearcoat:1,transparent:true,opacity:.7});
+  for(let i=0;i<40;i++){const a=rnd()*TAU,r=Math.sqrt(rnd())*fr*.95,h=H-.01+.14*Math.pow(Math.max(0,1-(r/fr)**2),.55),s=.006+Math.pow(rnd(),2.5)*.02;const b=new THREE.Mesh(T.tiny,bub);b.position.set(Math.cos(a)*r,h+s*.3,Math.sin(a)*r);b.scale.setScalar(s);F.add(b)}
+  // foam spilling over the rim + a drip running down
+  const sp=P(0xb8895a,{roughness:.35,clearcoat:.6});
+  {const pts=[];for(let i=0;i<=8;i++){const a=.42+i*.06;pts.push(new V3(Math.sin(a)*(r1+.008),H+.012-Math.sin(i/8*PI)*.012,Math.cos(a)*(r1+.008)))}F.add(tap(sp,pts,t=>.026*Math.pow(Math.sin(PI*(.08+t*.84)),.6),24,10))}
+  const dr=P(0x4a2008,{roughness:.05,clearcoat:1});
+  F.add(tap(dr,[new V3(Math.sin(.7)*(r1+.012),H,Math.cos(.7)*(r1+.012)),new V3(Math.sin(.72)*(r1+.006),H-.14,Math.cos(.72)*(r1+.006)),new V3(Math.sin(.73)*(r1-.004),H-.3,Math.cos(.73)*(r1-.004))],t=>.02*(1-t*.55),20,8));
+  F.add(sph(dr,.017,Math.sin(.73)*(r1-.004),H-.3,Math.cos(.73)*(r1-.004),1,1.3,1));
+  F.rotation.x=.15;bPlace(F,new V3(0,H+.125,0),y);
+  return g;
+}
+
+/* Cutting chai: fluted glass, milky tea, froth ring, gold rim clip */
+function bFlute(geo,top,amp,n){const p=geo.attributes.position;for(let i=0;i<p.count;i++){const x=p.getX(i),z=p.getZ(i),yy=p.getY(i),r=Math.hypot(x,z);if(r<.05)continue;const a=Math.atan2(x,z);
+  const f=yy<top?1:yy<top+.16?1-(yy-top)/.16:0,fb=Math.min(1,yy/.05);const k=1+amp*f*fb*(Math.pow(Math.abs(Math.cos(a*n/2)),.55)-.6)/r;p.setX(i,x*k);p.setZ(i,z*k)}geo.computeVertexNormals();return geo}
+function cuttingchai(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0xd08a2a,{roughness:.06,clearcoat:1}));
+  const F=new THREE.Group();g.add(F);
+  const H=1.06,rb=.27,rt=.385,R=yy=>rb+(rt-rb)*Math.pow(Math.max(0,yy)/H,1.2);
+  const o=[[.001,0],[rb-.035,0],[rb-.008,.01],[rb,.035]];
+  for(let i=1;i<=20;i++){const yy=.035+i/20*(H-.035);o.push([R(yy),yy])}
+  o.push(...bArc(rt-.012,H,.014,-.1,PI,6));
+  for(let i=0;i<=14;i++){const yy=H-.01-i/14*(H-.2);o.push([R(yy)-.03,yy])}
+  o.push([R(.18)-.06,.17],[.001,.165]);
+  const glass=bGlass(0xe4f2ea,.12,.7);
+  const gm=new THREE.Mesh(bFlute(new THREE.LatheGeometry(o.map(p=>new V2(p[0],p[1])),96),.62,.02,12),glass);gm.renderOrder=4;F.add(gm);
+  const thick=bGlass(0xd2eadc,.3,.6);
+  const base=lathe(thick,[[.001,.005],[rb-.03,.005],[rb-.03,.16],[.001,.16]],64);base.renderOrder=3;F.add(base);
+  const rim=tor(thick,rt-.012,.014,0,H,0,PI/2);rim.renderOrder=5;F.add(rim);
+  // tea
+  const L=.8,tp=[[.001,.166],[R(.18)-.066,.172]];for(let i=0;i<=16;i++){const yy=.2+i/16*(L-.2);tp.push([R(yy)-.036,yy])}tp.push([.001,L]);
+  const tea=new THREE.Mesh(bFlute(new THREE.LatheGeometry(tp.map(p=>new V2(p[0],p[1])),96),.62,.02,12),P(0xb9773c,{roughness:.2,clearcoat:.8}));F.add(tea);
+  const top=new THREE.Mesh(new THREE.CircleGeometry(R(L)-.036,72),P(0xffffff,{map:T.teaTop,roughness:.25,clearcoat:.9,clearcoatRoughness:.1}));top.rotation.x=-PI/2;top.position.y=L+.002;F.add(top);
+  const bub=P(0xf6e4c8,{roughness:.05,clearcoat:1});for(let i=0;i<26;i++){const a=rnd()*TAU,r=R(L)-.05-rnd()*.03,s=.006+rnd()*.012;const b=new THREE.Mesh(T.tiny,bub);b.position.set(Math.cos(a)*r,L+.003,Math.sin(a)*r);b.scale.set(s,s*.6,s);F.add(b)}
+  // gold rim clip hooked over the highest point of the rim
+  F.rotation.set(.3,0,-.2);const rr=rt-.012,eu=new THREE.Euler(.3,0,-.2);let best=-9,phi=0;for(let i=0;i<180;i++){const f=i/180*TAU,yy=new V3(Math.sin(f)*rr,H,Math.cos(f)*rr).applyEuler(eu).y;if(yy>best){best=yy;phi=f}}
+  const dS=Math.sin(phi),dC=Math.cos(phi),RP=(r,yy)=>new V3(dS*r,yy,dC*r);
+  const A=RP(rr,H+.11),yA=y-.02;bPlace(F,A,yA);
+  const cl=[];for(let i=0;i<=16;i++){const a=PI*i/16;cl.push(RP(rr+Math.cos(a)*.034,H+.004+Math.sin(a)*.034))}
+  const clip=new THREE.Group();clip.add(tube(capMetal(),[RP(rr+.034,H-.12),...cl,RP(rr-.034,H-.08)],.011,40,8));
+  clip.add(sph(capMetal(),.02,...RP(rr+.034,H-.12).toArray()));clip.add(sph(capMetal(),.02,...RP(rr-.034,H-.08).toArray()));clip.add(tor(capMetal(),.035,.011,...RP(rr,H+.075).toArray(),0,phi+PI/2,0));F.add(clip);
+  return g;
+}
+
+/* Alphonso mango with stalk and two leaves */
+function mango(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0xf08a18,{roughness:.06,clearcoat:1}));
+  const geo=new THREE.SphereGeometry(1,80,60),p=geo.attributes.position,n=p.count,col=new Float32Array(n*3),v=new V3();
+  const C=h=>new THREE.Color(h).convertSRGBToLinear(),cY=C(0xf7c02a),cO=C(0xf2921c),cR=C(0xd9531e),cG=C(0xa8b43a),c=new THREE.Color();
+  let top=-9;
+  for(let i=0;i<n;i++){v.fromBufferAttribute(p,i);const t=v.y;
+    const w=1+.1*t-.08*t*t;let x=v.x*.62*w,z=v.z*.54*w,yy=v.y*.8;
+    x+=-.17*Math.pow(Math.max(0,-t),2.2)+.04*(1-t*t);
+    const bk=Math.exp(-(((t+.7)/.2)**2))*Math.max(0,-v.x);x-=.04*bk;yy-=.02*bk;
+    const rr=v.x*v.x+v.z*v.z;if(t>0)yy-=.06*Math.exp(-rr/.025)*t;
+    yy+=.05*v.x*Math.max(0,t);
+    x+=.006*Math.sin(v.y*9+v.z*5);
+    p.setXYZ(i,x,yy,z);if(rr<.001&&t>0)top=Math.max(top,yy);
+    const bl=v.x*.55+v.z*.35+t*.55+.08*Math.sin(v.x*7+v.y*5);
+    c.copy(cY);c.lerp(cO,Math.min(1,Math.max(0,(bl+.2)/.6)));c.lerp(cR,Math.min(1,Math.max(0,(bl-.35)/.45))*.9);
+    c.lerp(cG,Math.max(0,(t-.6)/.4)*Math.exp(-rr/.3)*.75);
+    const sp=rnd()<.06?.9:1;col[i*3]=c.r*sp;col[i*3+1]=c.g*sp;col[i*3+2]=c.b*sp;}
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
+  const bump=noiseTex.clone();bump.needsUpdate=true;bump.repeat.set(6,4);
+  const skin=P(0xffffff,{vertexColors:true,roughness:.32,clearcoat:.55,clearcoatRoughness:.25,bumpMap:bump,bumpScale:.002});
+  const F=new THREE.Group();g.add(F);const body=new THREE.Mesh(geo,skin);F.add(body);
+  const stalk=mat({color:0x5b4a1e,roughness:.7,bumpMap:noiseTex,bumpScale:.01});
+  F.add(tap(stalk,[new V3(0,top-.02,0),new V3(.005,top+.07,0),new V3(-.01,top+.16,0)],t=>.032-.008*t,10,10));
+  F.add(sph(stalk,.036,-.01,top+.165,0,1,.5,1));F.add(tor(mat({color:0x6d7a26,roughness:.6}),.045,.014,0,top+.005,0,PI/2));
+  const lm=P(0x2f6b20,{roughness:.28,clearcoat:.8,clearcoatRoughness:.15,side:THREE.DoubleSide}),rib=P(0x9fbf58,{roughness:.4});
+  [[1.0,.19,.22,.1,3.55,-.35,.04,1.0],[.8,.16,.22,.12,.45,-.5,-.04,-.9]].forEach(([len,wid,fold,curl,ry,rz,zz,roll])=>{
+    const L0=new THREE.Group();L0.position.set(0,top+.11,zz);L0.rotation.set(0,ry,rz);F.add(L0);const L=new THREE.Group();L.rotation.x=roll;L0.add(L);
+    L.add(new THREE.Mesh(bLeafGeo(len,wid,fold,curl),lm));
+    const pts=[];for(let i=0;i<=10;i++){const t=i/10;pts.push(new V3(t*len,-curl*t*t*len+.003,0))}L.add(tap(rib,pts,t=>.009*(1-t)+.002,20,5));
+    L.add(tap(stalk,[new V3(-.02,0,0),new V3(.06,-.0,0)],()=>.012,4,6));
+  });
+  F.scale.setScalar(1.05);F.rotation.z=.05;bPlace(F,new V3(-.01,top+.17,0),y+.01);
+  return g;
+}
+
+/* Brown-sugar boba: clear cup, tiger-striped milk tea, tapioca pearls, dome lid, fat straw */
+function boba(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0xf07aa4,{roughness:.06,clearcoat:1}));y=bPinCup(g,y);
+  const F=new THREE.Group();g.add(F);
+  const H=1.2,rb=.29,rt=.41,R=yy=>rb+(rt-rb)*yy/H;
+  const o=[[.001,0],[rb-.03,0],[rb-.005,.008],[rb,.03]];for(let i=1;i<=12;i++){const yy=.03+i/12*(H-.03);o.push([R(yy),yy])}
+  o.push([rt+.018,H+.004],[rt+.026,H+.02],[rt+.012,H+.03],[rt-.004,H+.01]);for(let i=0;i<=12;i++){const yy=H-.01-i/12*(H-.03);o.push([R(yy)-.01,yy])}o.push([.001,.02]);
+  const clear=bGlass(0xf4f8ff,.1,.6);
+  const cup=lathe(clear,o,96);cup.renderOrder=4;F.add(cup);
+  // tea (tiger stripes on the wall), narrower at the bottom so pearls sit against the cup
+  const L=1.0,tp=[[.001,.02],[R(.02)-.13,.02],[R(.34)-.13,.34],[R(.44)-.02,.44]];for(let i=1;i<=10;i++){const yy=.44+i/10*(L-.44);tp.push([R(yy)-.018,yy])}tp.push([.001,L]);
+  const tea=lathe(P(0xffffff,{map:T.tiger,roughness:.18,clearcoat:.9,clearcoatRoughness:.1}),tp,96);F.add(tea);
+  const pearl=P(0x2b1208,{roughness:.1,clearcoat:1,clearcoatRoughness:.04,sheen:new THREE.Color(0x6a3a20)});
+  for(let l=0;l<3;l++){const yy=.09+l*.115,cnt=12;for(let k=0;k<cnt;k++){const a=(k+(l%2)*.5)/cnt*TAU+rnd()*.12,r=R(yy)-.082,s=.066+rnd()*.008;const b=new THREE.Mesh(T.ball,pearl);b.position.set(Math.sin(a)*r,yy+rnd()*.02,Math.cos(a)*r);b.scale.setScalar(s);F.add(b)}}
+  // ice cubes floating near the top
+  const ice=bGlass(0xffffff,.25,.5);
+  [[.18,.95,.1,.4],[-.2,.93,-.05,1.1],[.02,.96,-.22,2.1]].forEach(([x,yy,z,r])=>{const c=ext(ice,roundRect(.16,.16,.04),.14,.02,.02,2,4);c.position.set(x,yy,z);c.rotation.set(r,r*1.3,.3);c.renderOrder=2;F.add(c)});
+  // dome lid
+  const lid=[[rt+.03,H+.0],[rt+.038,H+.03],[rt+.03,H+.05],[rt+.005,H+.058]];for(let i=1;i<=14;i++){const t=i/14,r=(rt+.005)*(1-t)+.1*t;lid.push([r,H+.058+.24*Math.pow(1-((r-.1)/(rt-.095))**2,.6)*(t>.0?1:0)])}
+  lid.push([.1,H+.31],[.085,H+.325],[.001,H+.325]);
+  const lm=lathe(bGlass(0xf8fbff,.12,.55),lid,80);lm.renderOrder=5;F.add(lm);
+  // straw
+  const sm=P(0xef7fa8,{roughness:.18,clearcoat:.9,side:THREE.DoubleSide});const SL=1.02,sg=new THREE.CylinderGeometry(.058,.058,SL,28,1,true),sp=sg.attributes.position;
+  for(let i=0;i<sp.count;i++)if(sp.getY(i)>0)sp.setY(i,sp.getY(i)-sp.getX(i)*.7);sg.computeVertexNormals();
+  const straw=new THREE.Mesh(sg,sm);straw.position.set(.15,H+.08,.02);straw.rotation.z=-.2;F.add(straw);
+  F.add(tor(P(0xffffff,{roughness:.2,clearcoat:1,transparent:true,opacity:.5,depthWrite:false}),.07,.012,.13,H+.26,.02,PI/2+.0,0,-.2));
+  F.rotation.x=.12;bPlace(F,new V3(0,H+.325,0),y);
+  return g;
+}
+
+/* Strawberry-glazed donut with rainbow sprinkles */
+function donut(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0xf06a9c,{roughness:.06,clearcoat:1}));y=bPinCup(g,y);
+  const F=new THREE.Group();g.add(F);const R=.5,t=.27,ZS=.82;
+  const C=h=>new THREE.Color(h).convertSRGBToLinear(),cC=C(0xf2d49c),cB=C(0xc9772e),cD=C(0x9a4a16),c=new THREE.Color();
+  const dg=new THREE.TorusGeometry(R,t,36,100),dp=dg.attributes.position,dc=new Float32Array(dp.count*3);
+  for(let i=0;i<dp.count;i++){const x=dp.getX(i),yy=dp.getY(i),z=dp.getZ(i);const rad=Math.hypot(x,yy)-R,th=Math.atan2(z,rad);
+    const band=Math.exp(-((th/.32)**2)),face=Math.pow(Math.abs(Math.sin(th)),1.5);c.copy(cB).lerp(cD,face*.7).lerp(cC,band*.9);const k=.94+rnd()*.08;dc[i*3]=c.r*k;dc[i*3+1]=c.g*k;dc[i*3+2]=c.b*k;
+    const bmp=1+.012*Math.sin(Math.atan2(yy,x)*17+th*5)*Math.sin(th*7);dp.setXYZ(i,x*bmp,yy*bmp,z*ZS)}
+  dg.setAttribute('color',new THREE.BufferAttribute(dc,3));dg.computeVertexNormals();
+  const db=noiseTex.clone();db.needsUpdate=true;db.repeat.set(10,3);
+  F.add(new THREE.Mesh(dg,P(0xffffff,{vertexColors:true,roughness:.6,clearcoat:.15,clearcoatRoughness:.6,bumpMap:db,bumpScale:.006})));
+  // glaze
+  const drip=u=>.24*Math.pow(Math.max(0,Math.sin(5*u+.6)),3)+.14*Math.pow(Math.max(0,Math.sin(8*u+2.1)),4)+.05*Math.sin(13*u)+.03*Math.sin(21*u+1);
+  const dripIn=u=>.1*Math.pow(Math.max(0,Math.sin(4*u+1.3)),3)+.03*Math.sin(9*u);
+  const NU=128,NT=26,pos=[],idx=[];
+  const gp=(u,s)=>{const a0=.3-drip(u),a1=PI-.42+dripIn(u),th=a0+(a1-a0)*s,tg=t+.004+.034*Math.pow(Math.sin(PI*s),.3);return[(R+tg*Math.cos(th))*Math.cos(u),(R+tg*Math.cos(th))*Math.sin(u),tg*Math.sin(th)*ZS,th,tg]};
+  for(let i=0;i<=NU;i++){const u=i/NU*TAU;for(let j=0;j<=NT;j++){const q=gp(u,j/NT);pos.push(q[0],q[1],q[2])}}
+  for(let i=0;i<NU;i++)for(let j=0;j<NT;j++){const a=i*(NT+1)+j,b=a+NT+1;idx.push(a,b,a+1,b,b+1,a+1)}
+  const gg=new THREE.BufferGeometry();gg.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));gg.setIndex(idx);gg.computeVertexNormals();
+  F.add(new THREE.Mesh(gg,P(0xee5b93,{roughness:.14,clearcoat:1,clearcoatRoughness:.04})));
+  // sprinkles
+  const cols=[0xfbf6ee,0xf6c624,0x3d8fe0,0x46b85a,0xf2782a,0x9a5fd6,0xe8344e].map(h=>P(h,{roughness:.22,clearcoat:.9}));
+  const Y=new V3(0,1,0),nrm=new V3(),tu=new V3(),tt=new V3(),dir=new V3();
+  for(let k=0;k<110;k++){const u=rnd()*TAU,s=.12+rnd()*.76,q=gp(u,s),th=q[3];
+    nrm.set(Math.cos(th)*Math.cos(u),Math.cos(th)*Math.sin(u),Math.sin(th)/ZS).normalize();
+    tu.set(-Math.sin(u),Math.cos(u),0);tt.crossVectors(nrm,tu).normalize();const ph=rnd()*TAU;dir.copy(tu).multiplyScalar(Math.cos(ph)).addScaledVector(tt,Math.sin(ph));
+    const m=new THREE.Mesh(T.sprinkle,cols[k%cols.length]);m.quaternion.setFromUnitVectors(Y,dir);m.position.set(q[0],q[1],q[2]).addScaledVector(nrm,.008);F.add(m)}
+  F.rotation.x=-.5;bPlace(F,new V3(0,R+t-.01,0),y+.01);
+  return g;
+}
+
+/* Samosa: blistered fried pastry pyramid with a crimped seam */
+function samosa(){
+  const T=bTextures(),g=new THREE.Group();let y=bHang(g,P(0x3f9a3a,{roughness:.06,clearcoat:1}));y=bPinCup(g,y);
+  const h=1.3,rb=.76,apex=new V3(0,h,0),bv=[PI/2,-PI/6,PI*7/6].map(a=>new V3(Math.cos(a)*rb,0,-Math.sin(a)*rb));
+  const planes=[[new V3(0,-1,0),0]];
+  for(let i=0;i<3;i++){const a=bv[i],b=bv[(i+1)%3],n=new V3().crossVectors(b.clone().sub(apex),a.clone().sub(apex)).normalize();const mid=a.clone().add(b).multiplyScalar(.5);if(n.dot(mid)<0)n.negate();planes.push([n,n.dot(apex)])}
+  const K=.045,c0=new V3(0,.4,0),q=new V3(),w=new V3();
+  const fs=pp=>planes.map(([n,d])=>n.dot(pp)-d);
+  const Fn=pp=>{const f=fs(pp);let s=0;for(const v of f)s+=Math.exp(v/K);const sd=K*Math.log(s);const sp=pp.distanceTo(c0)-.6,wb=.3*(1-Math.min(1,Math.max(0,(pp.y-.55)/.6)));return (1-wb)*sd+wb*sp};
+  const geo=new THREE.SphereGeometry(1,128,96),p=geo.attributes.position,n=p.count,col=new Float32Array(n*3),v=new V3();
+  const BL=[];for(let i=0;i<900;i++){const d=new V3(rnd()*2-1,rnd()*2-1,rnd()*2-1).normalize();BL.push([d,.003+rnd()*.009,.02+rnd()*.045])}
+  const C=hx=>new THREE.Color(hx).convertSRGBToLinear(),cG=C(0xbf6f24),cL=C(0xdc983f),cD=C(0x74360c),c=new THREE.Color();let top=-9;
+  const sA=bv[1],sB=apex,sD=sB.clone().sub(sA),sL=sD.length();sD.normalize();
+  for(let i=0;i<n;i++){v.fromBufferAttribute(p,i).normalize();let lo=0,hi=2.2;for(let k=0;k<26;k++){const m=(lo+hi)/2;q.copy(c0).addScaledVector(v,m);Fn(q)<0?lo=m:hi=m}
+    let bump=0;for(const [d,a,s] of BL){const dd=v.distanceToSquared(d);if(dd<s*s*9)bump+=a*Math.exp(-dd/(s*s))}
+    bump+=.006*Math.sin(v.x*13+v.y*7)*Math.sin(v.z*11-v.y*9);
+    q.copy(c0).addScaledVector(v,lo);w.copy(q).sub(sA);const et=Math.max(0,Math.min(1,w.dot(sD)/sL)),ed=w.addScaledVector(sD,-et*sL).length();
+    const fade=Math.min(1,et/.06)*Math.min(1,(1-et)/.12),pl=Math.sin(et*TAU*10),ridge=.06*Math.exp(-((ed/.05)**2))*fade*(.45+.55*pl);
+    const r=lo+bump+ridge;q.copy(c0).addScaledVector(v,r);p.setXYZ(i,q.x,q.y,q.z);top=Math.max(top,q.y);
+    const f=fs(q).sort((a,b)=>b-a),edge=Math.exp(-((f[1]/.1)**2));
+    c.copy(cG).lerp(cL,Math.min(1,bump*55)).lerp(cD,Math.min(1,edge*.5+Math.max(0,-bump)*25+ridge*(1-pl)*6+(rnd()<.05?.3:0)));col[i*3]=c.r;col[i*3+1]=c.g;col[i*3+2]=c.b}
+  geo.setAttribute('color',new THREE.BufferAttribute(col,3));geo.computeVertexNormals();
+  const bm=noiseTex.clone();bm.needsUpdate=true;bm.repeat.set(10,7);
+  const pastry=P(0xffffff,{vertexColors:true,roughness:.46,clearcoat:.4,clearcoatRoughness:.3,bumpMap:bm,bumpScale:.008});
+  const F=new THREE.Group();g.add(F);F.add(new THREE.Mesh(geo,pastry));
+  F.rotation.y=-.2;bPlace(F,new V3(0,top-.01,0),y);
+  return g;
+}
 // @new-charms:B (add set B charm functions above this line)
 //
 // @new-charms:C (add set C charm functions above this line)
@@ -1291,6 +1522,7 @@ const COLLECTIONS=[
   {name:'Nature & play',items:[['crystal','Amethyst',crystal],['moonstar','Moon & star',moonstar],['cherries','Cherries',cherries],['cricket','Cricket bat',cricket]]},
   // @collection:A (add set A collection entry above this line)
   //
+  {name:'Chai & Snacks',items:[['filtercoffee','Filter coffee',filtercoffee],['cuttingchai','Cutting chai',cuttingchai],['mango','Alphonso mango',mango],['boba','Brown-sugar boba',boba],['donut','Glazed donut',donut],['samosa','Samosa',samosa]]},
   // @collection:B (add set B collection entry above this line)
   //
   // @collection:C (add set C collection entry above this line)
