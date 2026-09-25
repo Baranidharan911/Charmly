@@ -4,9 +4,10 @@
 import { cpSync, rmSync, readFileSync, writeFileSync } from 'node:fs';
 
 rmSync('website/demo', { recursive: true, force: true });
-cpSync('renderer', 'website/demo', { recursive: true });
+// renderer/_test holds the app's unit tests; they don't belong on the public site
+cpSync('renderer', 'website/demo', { recursive: true, filter: p => !/[\\/]_test([\\/]|$)/.test(p) });
 
-const src = readFileSync('renderer/index.html', 'utf8');
+const src = readFileSync('renderer/lib.js', 'utf8'); // COLLECTIONS lives in the charm library
 const block = src.slice(src.indexOf('const COLLECTIONS=['), src.indexOf('];', src.indexOf('const COLLECTIONS=[')));
 const collections = [...block.matchAll(/\{name:'((?:\\'|[^'])+)',items:\[(.*)\]\}/g)].map(([, name, items]) => ({
   name: name.replace(/\\'/g, "'"),
