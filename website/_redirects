@@ -1,0 +1,6 @@
+# Short download links -> newest GitHub Release file.
+# If the repo moves, change the owner/name here only.
+/download/windows            https://github.com/Baranidharan911/charm-line/releases/latest/download/CharmLine-Setup.exe             302
+/download/windows-portable   https://github.com/Baranidharan911/charm-line/releases/latest/download/CharmLine-Windows-Portable.zip  302
+/download/mac                https://github.com/Baranidharan911/charm-line/releases/latest/download/CharmLine-Mac.dmg              302
+/download/linux              https://github.com/Baranidharan911/charm-line/releases/latest/download/CharmLine-Linux.AppImage       302

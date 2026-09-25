@@ -1,0 +1,31 @@
+{
+  "name": "charm-line",
+  "productName": "Charm Line",
+  "version": "1.0.0",
+  "description": "Physics-simulated 3D charms hanging on your desktop.",
+  "main": "main.js",
+  "author": "Manoj",
+  "license": "UNLICENSED",
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "devDependencies": {
+    "electron": "^44.4.5",
+    "electron-builder": "^26.15.3"
+  },
+  "build": {
+    "appId": "in.elbrit.charmline",
+    "productName": "Charm Line",
+    "directories": { "output": "dist", "buildResources": "build" },
+    "files": ["main.js", "preload.js", "renderer/**/*", "build/tray*.png", "build/icon.png"],
+    "win": { "target": ["nsis", "zip"], "icon": "build/icon.png", "artifactName": "CharmLine-Windows-Portable.${ext}" },
+    "nsis": { "oneClick": true, "perMachine": false, "runAfterFinish": true, "shortcutName": "Charm Line", "artifactName": "CharmLine-Setup.${ext}" },
+    "mac": { "target": [{ "target": "dmg", "arch": ["universal"] }], "icon": "build/icon.png", "category": "public.app-category.entertainment", "extendInfo": { "LSUIElement": true }, "artifactName": "CharmLine-Mac.${ext}" },
+    "linux": { "target": ["AppImage"], "icon": "build/icon.png", "category": "Utility", "artifactName": "CharmLine-Linux.${ext}" }
+  }
+}
