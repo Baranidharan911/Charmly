@@ -57,6 +57,14 @@ test('Windows: a v1.1 Run value (no --hidden) is rewritten with it', () => {
   assert.equal(app.run[APP_ID].enabled, true);
 });
 
+test("Windows: another copy's v1.1 value (different exe) is not taken over", () => {
+  const app = fakeApp({ [APP_ID]: { path: 'D:\\Other\\Charm Line.exe', args: [] } });
+  const l = createLogin({ app, platform: 'win32', fs: installed, execPath: EXE });
+  l.init(false);
+  assert.equal(app.calls.length, 0);
+  assert.equal(app.run[APP_ID].path, 'D:\\Other\\Charm Line.exe');
+});
+
 test('Windows: a v1.1 value disabled in Task Manager stays disabled', () => {
   const app = fakeApp({ [APP_ID]: { path: EXE, args: [], enabled: false } });
   const l = createLogin({ app, platform: 'win32', fs: installed, execPath: EXE });

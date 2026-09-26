@@ -381,6 +381,7 @@ function handle(ch, fn, who) {
 }
 
 // Studio -> overlay line commands: correlated by id, 5 s timeout -> "Charms are not responding".
+// Held until the overlay's first LineState push (it is still loading its charms before that).
 const relay = createRelay({
   send: (msg) => {
     if (!win || win.isDestroyed() || win.webContents.isCrashed()) return false; // loading: preload.js buffers it
@@ -399,6 +400,7 @@ function registerIpc() {
   ipcMain.on('line:state', (e, state) => {
     if (!trustedOverlay(e) || !isObj(state) || !isObj(state.S) || !Array.isArray(state.charms)) return;
     lastLineState = state;
+    relay.setReady(true); // the first push means the overlay is taking commands
     sendStudio('line', state); // no Studio page loaded: dropped
   });
   ipcMain.on('overlay:openStudio', (e, cid) => {

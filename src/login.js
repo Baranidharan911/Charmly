@@ -107,8 +107,10 @@ function createLogin({ app, platform = process.platform, env = process.env, fs =
           app.setLoginItemSettings({ openAtLogin: false, path: execPath, name: LEGACY_RUN_NAME });
           if (legacy.enabled !== false) return set(true);
         }
-        // v1.1 value (same name, no --hidden): rewrite it with the argument, same enabled state.
-        const old = items.find((i) => i.name === APP_ID && !(Array.isArray(i.args) && i.args.includes(HIDDEN_ARG)));
+        // v1.1 value (same name, this exe, no --hidden): rewrite it with the argument, same enabled state.
+        // Another copy's value (different path) is left alone; portable builds re-save below.
+        const mine = (i) => typeof i.path === 'string' && i.path.toLowerCase() === String(execPath).toLowerCase();
+        const old = items.find((i) => i.name === APP_ID && mine(i) && !(Array.isArray(i.args) && i.args.includes(HIDDEN_ARG)));
         if (old) return set(true, { keepDisabled: old.enabled === false });
       } catch (e) { log('login migrate failed', e); }
       if (caps.portable && intent) return set(true);

@@ -486,15 +486,19 @@ if(LINE)CL.onLineCmd(onCmd);
 // ---- shown / hidden
 function dropIn(){if(reduce)return;for(const c of charms){const e=c.pts.at(-1);e.y-=14+Math.random()*8;e.py=e.y;e.px=e.x+(Math.random()<.5?-1:1)*(1+Math.random()*1.2);c.yawV+=(Math.random()-.5)*.06}wake()}
 
-async function initApp(){
+function initApp(){
   if(CL.onShown)CL.onShown(v=>{if(v)dropIn();else pullCancel('hidden')});
   if(CL.onActionsChanged)CL.onActionsChanged(refreshActs);
-  try{const l=await CL.actions.list();ACT=l&&typeof l==='object'?l:{}}catch(e){}
-  // bindings for charms that no longer exist (removed while the app was closed, or lost images) are dropped
-  const live=new Set(charms.map(c=>c.opts.cid));
-  for(const cid of Object.keys(ACT))if(!live.has(cid)&&validCid(cid)){delete ACT[cid];CL.actions.forget(cid).catch(()=>{})}
-  wake();
+  // Ready for the Studio before the first frame: on a first run the first render compiles every shader
+  // and can hold this thread for seconds (longer than main's 5 s command timeout).
   if(LINE){lineReady=true;sendState();cmdQueue.splice(0).forEach(onCmd)}
+  CL.actions.list().then(l=>{
+    ACT=l&&typeof l==='object'?l:{};
+    // bindings for charms that no longer exist (removed while the app was closed, or lost images) are dropped
+    const live=new Set(charms.map(c=>c.opts.cid));
+    for(const cid of Object.keys(ACT))if(!live.has(cid)&&validCid(cid)){delete ACT[cid];CL.actions.forget(cid).catch(()=>{})}
+    wake();
+  },()=>{});
 }
 
 // "nazar:170,bell" -> evenly spaced charms; length after the colon is optional.
