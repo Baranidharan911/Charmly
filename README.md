@@ -40,7 +40,8 @@ into `website/demo/`, so the page's live, swingable preview is the real app engi
 writes the collection list from the app's `COLLECTIONS`. Run the same command before previewing
 the site locally, for example with `python -m http.server 8080` inside `website/`.
 
-The charm pictures in `website/assets/charms/` are renders of the app's charms. After you add
+The charm pictures in `renderer/charms/` are renders of the app's charms, used by the app window
+and (copied into `website/demo/`) by the site. After you add
 or change a charm, render them again and commit the new images.
 
 The embedded preview is `renderer/index.html?demo=1`. It takes `charms=id:ropeLength,...`,

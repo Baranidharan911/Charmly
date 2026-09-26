@@ -321,10 +321,10 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
       </div>
       <div class="behave">
         <div class="notes">
-          <div class="note rv"><img src="/assets/charms/bell.webp" alt="" loading="lazy"><h3>It has weight.</h3><p>Flick a charm and it swings, bumps its neighbours and slowly settles, like a real charm on a real thread. Bells even ring.</p></div>
-          <div class="note rv"><img src="/assets/charms/rubberduck.webp" alt="" loading="lazy"><h3>It stays out of the way.</h3><p>Clicks pass straight through to your apps. Only the charms listen to your mouse, and only when you reach for them.</p></div>
-          <div class="note rv"><img src="/assets/charms/lotus.webp" alt="" loading="lazy"><h3>It rests when you do.</h3><p>Charm Line only draws while something is moving. A still desktop costs almost nothing, and it works fully offline.</p></div>
-          <div class="note rv"><img src="/assets/charms/kitsune.webp" alt="" loading="lazy"><h3>It lives in the tray.</h3><p>Open the panel from the tray or with Ctrl+Shift+H. Hide the charms for a call, bring them back after.</p></div>
+          <div class="note rv"><img src="/demo/charms/bell.webp" alt="" loading="lazy"><h3>It has weight.</h3><p>Flick a charm and it swings, bumps its neighbours and slowly settles, like a real charm on a real thread. Bells even ring.</p></div>
+          <div class="note rv"><img src="/demo/charms/rubberduck.webp" alt="" loading="lazy"><h3>It stays out of the way.</h3><p>Clicks pass straight through to your apps. Only the charms listen to your mouse, and only when you reach for them.</p></div>
+          <div class="note rv"><img src="/demo/charms/lotus.webp" alt="" loading="lazy"><h3>It rests when you do.</h3><p>Charm Line only draws while something is moving. A still desktop costs almost nothing, and it works fully offline.</p></div>
+          <div class="note rv"><img src="/demo/charms/kitsune.webp" alt="" loading="lazy"><h3>It lives in the tray.</h3><p>Open the panel from the tray or with Ctrl+Shift+H. Hide the charms for a call, bring them back after.</p></div>
         </div>
         <div class="receipt rv" aria-label="What you get">
           <div class="hd"><b>Luck on a Line</b><span>CHARM LINE · SHOP COPY · <span id="today"></span></span></div>
@@ -437,7 +437,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
     <div class="big" aria-hidden="true">
       <svg class="strand" viewBox="0 0 1000 120" preserveAspectRatio="none"><path d="M-10 20 Q500 130 1010 20" fill="none" stroke="#b8862f" stroke-width="5"/><path d="M-10 20 Q500 130 1010 20" fill="none" stroke="#e0b96c" stroke-width="5" stroke-dasharray="3 7"/></svg>
       <h2>luck, <i>on a line.</i></h2>
-      <span class="dangle"><img src="/assets/charms/nazar.webp" alt="" loading="lazy"></span>
+      <span class="dangle"><img src="/demo/charms/nazar.webp" alt="" loading="lazy"></span>
     </div>
     <div class="frow mono">
       <span>© <span id="yr">2026</span> Charm Line · Made by Manoj · luckonaline.netlify.app</span>
@@ -513,7 +513,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
     const list = filter === 'All' ? ALL : ALL.filter(x => x.col === filter);
     $('#grid').innerHTML = list.map(x => `<button class="spec" data-id="${x.id}" aria-pressed="false">
       <span class="top mono"><span>No. ${pad3(x.no)}</span><span>${x.col}</span></span>
-      <span class="pic"><img src="/assets/charms/${x.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'"></span>
+      <span class="pic"><img src="/demo/charms/${x.id}.webp" alt="" loading="lazy" onerror="this.style.visibility='hidden'"></span>
       <span class="nm">${x.name}</span><span class="act mono">Hang it +</span></button>`).join('');
     $$('#grid .spec').forEach(c => c.addEventListener('click', () => {
       const id = c.dataset.id, i = onLine.indexOf(id), name = c.querySelector('.nm').textContent;
