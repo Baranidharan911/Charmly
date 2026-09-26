@@ -17,6 +17,11 @@ try{renderer=new THREE.WebGLRenderer({canvas:glc,alpha:true,antialias:true,premu
 renderer.setClearColor(0x000000,0);renderer.outputEncoding=THREE.sRGBEncoding;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1;
 const LIB=createCharmLib(renderer);
 renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+// three.js checks each shader program's link status as soon as it is created, which makes the GPU compile them one
+// after another on this thread (~6 s for the first frame, enough to stall the whole desktop on some PCs). With the check
+// off, warm() starts all compiles at once and waits for KHR_parallel_shader_compile to report them done.
+renderer.debug.checkShaderErrors=false;
+const PSC=renderer.getContext().getExtension('KHR_parallel_shader_compile');
 const scene=new THREE.Scene();scene.environment=LIB.env;const LT=LIB.lights(scene);
 const KEY_DIR=new THREE.Vector3(-.8,1.2,1.4).normalize();LT.key.castShadow=true;LT.key.shadow.mapSize.set(2048,2048);LT.key.shadow.bias=-.0004;LT.key.shadow.normalBias=1.2;LT.key.shadow.radius=4;
 function shadowable(g){g.traverse(o=>{if(o.isMesh){const m=[].concat(o.material)[0];o.castShadow=!m.transparent;o.receiveShadow=true}})}
@@ -25,6 +30,32 @@ const R=()=>(W<600?40:54)*S.size;
 const FLAT=new Set(['kitpendant','om','hamsa','fortune','clover','horseshoe','nazar','moonstar','omamori']);
 
 function buildFor(type,opts){let b;if(type==='img'){const im=imports[opts.key];const cd=opts.capDesign||S.capDesign,cs=opts.capStyle||S.cap;b=LIB.imageCharm(im.tex,im.img.naturalWidth,im.img.naturalHeight,opts.cap!==false,cs,cd)}else b=LIB.build(type,Object.assign({},opts,{capStyle:opts.capStyle||S.cap,capDesign:opts.capDesign||S.capDesign}));shadowable(b.g);return b}
+// Compile new charms' shaders one charm at a time, pausing between them, and keep each charm hidden until it is ready.
+// three.js reads a program's uniforms right after linking it, so compiling a whole scene at once blocks for seconds
+// (6 s on a first run), long enough to stall the whole desktop on some PCs.
+const WARM_STANDIN=new THREE.MeshBasicMaterial();
+async function warm(list){
+  list=list.filter(c=>c&&c.obj);if(!list.length)return;
+  // renderer.compile() visits every object in the scene, hidden or not, so charms still waiting are taken out
+  // of the scene and put back one at a time.
+  list.forEach(c=>{c.warm=true;c.obj.visible=false;scene.remove(c.obj)});
+  // Within a charm, parts get their real material back one at a time (the rest wear an already-compiled stand-in),
+  // so each compile() call builds at most one new program. Pause only after a call that did real work.
+  for(const c of list){
+    if(c.gone)continue;                     // removed while waiting
+    const parts=[];c.obj.traverse(o=>{if(o.material){parts.push([o,o.material]);o.material=WARM_STANDIN}});
+    scene.add(c.obj);
+    for(const [o,m] of parts){
+      o.material=m;const t0=performance.now();renderer.compile(scene,camera);
+      if(performance.now()-t0>8)await new Promise(r=>setTimeout(r,16));
+      if(c.gone)break;
+    }
+    if(c.gone)parts.forEach(([o,m])=>o.material=m);
+  }
+  if(PSC){const gl=renderer.getContext(),t0=performance.now();
+    while(!renderer.info.programs.every(pr=>gl.getProgramParameter(pr.program,PSC.COMPLETION_STATUS_KHR))&&performance.now()-t0<20000)await new Promise(r=>setTimeout(r,40))}
+  list.forEach(c=>{c.warm=false;c.obj.visible=true});wake();
+}
 function makeCharm(type,axf,len,opts){
   opts=opts||{};if(!validCid(opts.cid))opts.cid=newCid();const b=buildFor(type,opts);
   const outer=new THREE.Group();outer.add(b.g);scene.add(outer);
@@ -35,8 +66,8 @@ function makeCharm(type,axf,len,opts){
 }
 const nameOf=c=>c.type==='img'?(imports[c.opts.key]&&imports[c.opts.key].name)||'Your image':LIB.TYPES[c.type].name;
 function gapAxf(){const xs=[0,...charms.map(c=>c.axf).sort((a,b)=>a-b),1];let best=.5,g=0;for(let i=0;i<xs.length-1;i++){const d=xs[i+1]-xs[i];if(d>g){g=d;best=(xs[i]+xs[i+1])/2}}return Math.min(.95,Math.max(.05,best))}
-function addCharm(type,opts){const c=makeCharm(type,gapAxf(),150+Math.random()*120,opts);c.pts.at(-1).px-=2;charms.push(c);wake();save();return c}
-function removeCharm(c){scene.remove(c.obj);LIB.dispose(c.obj);charms=charms.filter(x=>x!==c);if(drag&&drag.c===c){pullCancel('removed');drag=null;cv.style.cursor='default'}if(pillC===c)hidePill();if(NEW&&c.opts&&validCid(c.opts.cid))CL.actions.forget(c.opts.cid).then(refreshActs,()=>{})}
+function addCharm(type,opts){const c=makeCharm(type,gapAxf(),150+Math.random()*120,opts);c.pts.at(-1).px-=2;charms.push(c);warm([c]);wake();save();return c}
+function removeCharm(c){c.gone=true;scene.remove(c.obj);LIB.dispose(c.obj);charms=charms.filter(x=>x!==c);if(drag&&drag.c===c){pullCancel('removed');drag=null;cv.style.cursor='default'}if(pillC===c)hidePill();if(NEW&&c.opts&&validCid(c.opts.cid))CL.actions.forget(c.opts.cid).then(refreshActs,()=>{})}
 
 function dirOf(c){const p=c.pts,e=p[p.length-1],b=p[p.length-3];let dx=e.x-b.x,dy=e.y-b.y;const d=Math.hypot(dx,dy)||1;return{dx:dx/d,dy:dy/d}}
 function center(c,r){const e=c.pts.at(-1),{dx,dy}=dirOf(c);return{x:e.x+dx*c.cyU*r,y:e.y+dy*c.cyU*r,rc:c.rcU*r}}
@@ -115,10 +146,10 @@ function drawGlow(r){
 function draw(){
   ctx.clearRect(0,0,W,H);const r=R();
   drawGlow(r);
-  if(hasFilter)for(const c of charms){const ce=center(c,r);ctx.save();ctx.filter=`blur(${Math.round(r*.28)}px)`;ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(ce.x+r*.22,ce.y+r*.34,ce.rc*.85,ce.rc*.95,0,0,7);ctx.fill();ctx.restore()}
-  for(const c of charms)drawRope(c);
+  if(hasFilter)for(const c of charms){if(c.warm)continue;const ce=center(c,r);ctx.save();ctx.filter=`blur(${Math.round(r*.28)}px)`;ctx.fillStyle='rgba(0,0,0,.3)';ctx.beginPath();ctx.ellipse(ce.x+r*.22,ce.y+r*.34,ce.rc*.85,ce.rc*.95,0,0,7);ctx.fill();ctx.restore()}
+  for(const c of charms)if(!c.warm)drawRope(c);
   for(const c of charms){
-    drawHook(c);
+    if(!c.warm)drawHook(c);
   }
   drawPullRing(r);
   const zs=Math.min(r*3,1600/Math.max(1,charms.length));
@@ -135,6 +166,7 @@ function wake(){awake=120}
 let last=performance.now(),acc=0,glowUntil=0;
 function frame(t){
   requestAnimationFrame(frame);
+  if(t-last<12)return; // at most ~80 fps: plenty for the physics, and half the GPU work on 144 Hz+ screens
   const el=Math.min((t-last)/1000,.05);last=t;
   if(awake<=0&&!drag)return;
   acc+=el;let n=0;while(acc>=DT&&n<8){step();bells();acc-=DT;n++}
@@ -168,7 +200,7 @@ cv.addEventListener('pointerleave',()=>{mouse.x=mouse.y=-1});
 cv.addEventListener('dblclick',e=>{if(!e.isTrusted||!LINE)return;const c=hitCharm(e.clientX,e.clientY);if(c&&validCid(c.opts.cid))CL.openStudio(c.opts.cid)});
 
 function rebuild(c){
-  c.obj.remove(c.inner);LIB.dispose(c.inner);const b=buildFor(c.type,c.opts);c.inner=b.g;c.obj.add(b.g);c.cyU=b.cy;c.rcU=b.rc;c.clapper=b.clapper;wake();save();
+  c.obj.remove(c.inner);LIB.dispose(c.inner);const b=buildFor(c.type,c.opts);c.inner=b.g;c.obj.add(b.g);c.cyU=b.cy;c.rcU=b.rc;c.clapper=b.clapper;warm([c]);wake();save();
 }
 function forgetImage(k){charms.filter(x=>x.type==='img'&&x.opts.key===k).forEach(removeCharm);if(imports[k])imports[k].tex.dispose();delete imports[k];IDB.del(k);wake();save()}
 const IDB={
@@ -219,7 +251,7 @@ function processImage(img){
   return o.toDataURL('image/png');
 }
 function nudge(){ensureAudio();for(const c of charms){const e=c.pts.at(-1);e.px+=(Math.random()<.5?-1:1)*(1.6+Math.random()*1.6);c.yawV+=(Math.random()-.5)*.08}wake()}
-function rebuildAll(){charms.forEach(c=>{c.obj.remove(c.inner);LIB.dispose(c.inner);const bb=buildFor(c.type,c.opts);c.inner=bb.g;c.obj.add(bb.g);c.cyU=bb.cy;c.rcU=bb.rc;c.clapper=bb.clapper});wake();save()}
+function rebuildAll(){charms.forEach(c=>{c.obj.remove(c.inner);LIB.dispose(c.inner);const bb=buildFor(c.type,c.opts);c.inner=bb.g;c.obj.add(bb.g);c.cyU=bb.cy;c.rcU=bb.rc;c.clapper=bb.clapper});warm(charms);wake();save()}
 function normCaps(){if(S.cap==='minimal'){S.cap='gold';S.capDesign='ring'}}
 
 function renderThumbs(k=1){
@@ -238,7 +270,8 @@ function save(){if(DEMO)return;clearTimeout(save.t);save.t=setTimeout(()=>{try{l
 function load(){if(DEMO)return null;try{return JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){return null}}
 
 function resize(){
-  DPR=Math.min(window.devicePixelRatio||1,2);W=innerWidth;H=innerHeight;
+  // A full-screen layer: 1.5x is still sharp and far fewer pixels than 2x.
+  DPR=Math.min(window.devicePixelRatio||1,1.5);W=innerWidth;H=innerHeight;
   cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);cv.style.width=W+'px';cv.style.height=H+'px';ctx.setTransform(DPR,0,0,DPR,0,0);
   renderer.setPixelRatio(DPR);renderer.setSize(W,H,false);glc.style.width=W+'px';glc.style.height=H+'px';
   camera.left=0;camera.right=W;camera.top=0;camera.bottom=-H;camera.updateProjectionMatrix();
@@ -376,9 +409,10 @@ function thumbOf(k){
   if(!im.thumb){try{const iw=im.img.naturalWidth||1,ih=im.img.naturalHeight||1,s=Math.min(1,96/Math.max(iw,ih)),c=document.createElement('canvas');c.width=Math.max(1,Math.round(iw*s));c.height=Math.max(1,Math.round(ih*s));c.getContext('2d').drawImage(im.img,0,0,c.width,c.height);im.thumb=c.toDataURL('image/png')}catch(e){im.thumb=''}}
   return im.thumb;
 }
+let drawn=false;
 function lineState(){
   const lm=lenMax();
-  return{
+  return{drawn,
     S:{rope:S.rope,size:S.size,sound:S.sound,wind:S.wind,cap:S.cap,capDesign:S.capDesign},
     charms:charms.slice().sort((a,b)=>a.axf-b.axf).map(c=>{const o={};for(const k of OPT_KEYS)if(c.opts[k]!==undefined)o[k]=c.opts[k];
       return{cid:c.opts.cid,type:c.type,name:nameOf(c),collection:c.type==='img'?'Your images':LIB.TYPES[c.type].collection,len:Math.round(c.len),lenMax:Math.max(lm,Math.round(c.len)),opts:o}}),
@@ -506,9 +540,9 @@ function demoList(str){const ids=str.split(',').map(x=>x.split(':')).filter(([id
 if(DEMO){
   addEventListener('message',e=>{
     if(e.origin!==location.origin)return;const m=e.data||{};
-    if(m.type==='charms'){charms.slice().forEach(removeCharm);charms=demoList(m.charms).map(c=>{const x=makeCharm(c.type,c.axf,c.len);x.pts.at(-1).px-=2+Math.random()*2;return x});wake()}
+    if(m.type==='charms'){charms.slice().forEach(removeCharm);charms=demoList(m.charms).map(c=>{const x=makeCharm(c.type,c.axf,c.len);x.pts.at(-1).px-=2+Math.random()*2;return x});warm(charms);wake()}
     if(m.type==='nudge')nudge();
-    if(m.type==='add'&&LIB.TYPES[m.charm]){const c=makeCharm(m.charm,gapAxf(),m.len||140+Math.random()*110);c.pts.at(-1).px-=3;charms.push(c);wake()}
+    if(m.type==='add'&&LIB.TYPES[m.charm]){const c=makeCharm(m.charm,gapAxf(),m.len||140+Math.random()*110);c.pts.at(-1).px-=3;charms.push(c);warm([c]);wake()}
     if(m.type==='remove'){const c=charms.find(x=>x.type===m.charm);if(c){removeCharm(c);wake()}}
     if(m.type==='clear'){charms.slice().forEach(removeCharm)}
     if(m.type==='sway'){for(const c of charms){const e=c.pts.at(-1);e.px+=m.v*(.6+Math.random()*.4)}wake()}
@@ -534,7 +568,8 @@ async function init(){
   if(!DEMO&&d&&Array.isArray(d.charms)&&d.charms.some(c=>!c.opts||!validCid(c.opts.cid)))save(); // persist ids given to v1.0 charms
   if(NEW)initApp();
   addEventListener('resize',resize);
-  requestAnimationFrame(t=>{last=t;frame(t);try{performance.mark('charmline-ready')}catch(e){}});
+  await warm(charms);
+  requestAnimationFrame(t=>{last=t;frame(t);drawn=true;if(LINE)sendState();try{performance.mark('charmline-ready')}catch(e){}});
 }
 (document.fonts?Promise.race([Promise.all([document.fonts.ready,document.fonts.load('700 100px Oswald')]),new Promise(r=>setTimeout(r,2500))]):Promise.resolve()).then(init,init);
 })();

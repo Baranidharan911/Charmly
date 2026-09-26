@@ -300,6 +300,7 @@ function showStudioWindow() {
 }
 
 /** Show the Studio (creating it if needed). nav = { page: 'line', cid? } reaches studio.onNavigate. */
+let studioAfterCharms = false; // startup: open the Studio once the overlay reports its first frame
 function openStudio(nav) {
   if (!studioAlive()) createStudio();
   // Not loaded yet: sent from did-finish-load (preload-studio.js buffers it until onNavigate is registered).
@@ -401,6 +402,7 @@ function registerIpc() {
     if (!trustedOverlay(e) || !isObj(state) || !isObj(state.S) || !Array.isArray(state.charms)) return;
     lastLineState = state;
     relay.setReady(true); // the first push means the overlay is taking commands
+    if (state.drawn && studioAfterCharms) { studioAfterCharms = false; openStudio(); }
     sendStudio('line', state); // no Studio page loaded: dropped
   });
   ipcMain.on('overlay:openStudio', (e, cid) => {
@@ -497,7 +499,11 @@ if (!app.requestSingleInstanceLock()) {
     applyShortcuts();
     buildTrayMenu();
     // Started at sign-in (--hidden): charms only. Otherwise the Studio opens (its onboarding on first run).
-    if (!isHiddenLaunch(process.argv, { app })) openStudio();
+    // Wait for the charms' first frame so the two windows don't load at once; open anyway after 10 s.
+    if (!isHiddenLaunch(process.argv, { app })) {
+      studioAfterCharms = true;
+      setTimeout(() => { if (studioAfterCharms) { studioAfterCharms = false; openStudio(); } }, 10000);
+    }
     nativeTheme.on('updated', applyStudioTheme);
     screen.on('display-metrics-changed', fitToDisplay);
     screen.on('display-added', fitToDisplay);
