@@ -6,39 +6,19 @@
 <title>Charm Line</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; font-src 'self'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' data: blob:; object-src 'none'; base-uri 'none'; form-action 'none'">
 <style>
-@font-face{font-family:'Baloo Thambi 2';font-weight:400;font-style:normal;font-display:swap;src:url(fonts/baloo-thambi-2-latin-400-normal.woff2) format('woff2')}
 @font-face{font-family:'Baloo Thambi 2';font-weight:500;font-style:normal;font-display:swap;src:url(fonts/baloo-thambi-2-latin-500-normal.woff2) format('woff2')}
 @font-face{font-family:'Baloo Thambi 2';font-weight:600;font-style:normal;font-display:swap;src:url(fonts/baloo-thambi-2-latin-600-normal.woff2) format('woff2')}
-@font-face{font-family:'Baloo Thambi 2';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/baloo-thambi-2-latin-700-normal.woff2) format('woff2')}
 @font-face{font-family:'Oswald';font-weight:700;font-style:normal;font-display:swap;src:url(fonts/oswald-latin-700-normal.woff2) format('woff2')}
-#panel::-webkit-scrollbar{width:8px}#panel::-webkit-scrollbar-track{background:transparent}#panel::-webkit-scrollbar-thumb{background:rgba(241,232,212,.18);border-radius:8px}
-
+/* The overlay only draws charms. Every control lives in the Studio window (studio.html). */
 :root{
   box-sizing:border-box;
-  padding-top:env(safe-area-inset-top,0px);
-  padding-bottom:env(safe-area-inset-bottom,0px);
-  --wall-a:#1c1a17;--wall-b:#0e0d0c;--glow:rgba(214,160,72,.14);
-  --bar:rgba(22,20,18,.7);--bar-ink:#efe6d1;
-  --panel:rgba(24,22,20,.94);--ink:#f1e8d4;--muted:#a69c88;--line:rgba(241,232,212,.12);
-  --chip:#26231f;--chip-hover:#312d28;--on:#e1b45c;--on-ink:#1b1712;
-  --accent:#ef6a61;--focus:#7fd0f0;
+  --panel:rgba(24,22,20,.94);--ink:#f1e8d4;--line:rgba(241,232,212,.12);
+  --on:#e1b45c;--on-ink:#1b1712;--accent:#ef6a61;
 }
 @media (prefers-color-scheme:light){
-  :root:not([data-theme="dark"]){
-    --wall-a:#efe7d3;--wall-b:#d9cfb8;--glow:rgba(232,178,28,.2);
-    --bar:rgba(255,251,240,.72);--bar-ink:#2a2620;
-    --panel:rgba(255,251,241,.94);--ink:#241f19;--muted:#6d6456;--line:rgba(36,31,25,.13);
-    --chip:#f0e7d2;--chip-hover:#e7dbc0;--on:#241f19;--on-ink:#fbf5e6;
-    --accent:#b3262d;--focus:#1f6b8f;
-  }
+  :root:not([data-theme="dark"]){--panel:rgba(255,251,241,.94);--ink:#241f19;--line:rgba(36,31,25,.13);--on:#241f19;--on-ink:#fbf5e6;--accent:#b3262d}
 }
-:root[data-theme="light"]{
-  --wall-a:#efe7d3;--wall-b:#d9cfb8;--glow:rgba(232,178,28,.2);
-  --bar:rgba(255,251,240,.72);--bar-ink:#2a2620;
-  --panel:rgba(255,251,241,.94);--ink:#241f19;--muted:#6d6456;--line:rgba(36,31,25,.13);
-  --chip:#f0e7d2;--chip-hover:#e7dbc0;--on:#241f19;--on-ink:#fbf5e6;
-  --accent:#b3262d;--focus:#1f6b8f;
-}
+:root[data-theme="light"]{--panel:rgba(255,251,241,.94);--ink:#241f19;--line:rgba(36,31,25,.13);--on:#241f19;--on-ink:#fbf5e6;--accent:#b3262d}
 *,*::before,*::after{box-sizing:inherit}
 html,body{height:100%;margin:0}
 html,body{background:transparent!important}
@@ -50,139 +30,8 @@ body{
 #c,#g{position:fixed;inset:0;display:block}
 #c{touch-action:none;z-index:1}
 #g{pointer-events:none;z-index:1}
-#bar{
-  position:fixed;top:0;left:0;right:0;z-index:2;padding-top:env(safe-area-inset-top,0px);pointer-events:none;
-  background:var(--bar);-webkit-backdrop-filter:blur(18px) saturate(1.4);backdrop-filter:blur(18px) saturate(1.4);
-  border-bottom:1px solid var(--line);color:var(--bar-ink);
-}
-#bar .in{height:30px;display:flex;align-items:center;gap:18px;padding:0 16px;font-size:14px}
-#bar b{font-weight:700}
-#bar .sp{flex:1}
-#bar .dim{opacity:.7}
-#hint{
-  position:fixed;left:7vw;top:46%;z-index:0;pointer-events:none;max-width:14ch;
-  font-size:clamp(34px,6vw,72px);line-height:.95;font-weight:600;letter-spacing:-.02em;opacity:.78;transition:opacity .8s ease;
-}
-#hint small{display:block;margin-top:18px;font-size:16px;line-height:1.35;font-weight:500;letter-spacing:0;max-width:30ch;color:var(--muted)}
-#hint.gone{opacity:0}
-#panel{
-  position:fixed;z-index:3;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
-  width:326px;max-width:calc(100vw - 32px);max-height:calc(100% - 72px);overflow:auto;
-  background:var(--panel);border:1px solid var(--line);border-radius:20px;
-  -webkit-backdrop-filter:blur(20px);backdrop-filter:blur(20px);
-  box-shadow:0 18px 50px -20px rgba(0,0,0,.6);padding:14px 16px 16px;font-size:15px;
-}
-#panel[hidden]{display:none}
-#panel header{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
-#panel header strong{font-size:19px;font-weight:700}
-#panel h2{font-size:14px;font-weight:600;color:var(--muted);margin:14px 0 8px}
-.coll{margin-top:4px}
-.coll summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:baseline;padding:8px 2px 6px;font-weight:600;font-size:15px;border-radius:8px}
-.coll summary::-webkit-details-marker{display:none}
-.coll summary span:last-child{font-weight:500;font-size:13px;color:var(--muted)}
-.coll summary::after{content:'';width:8px;height:8px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg);margin:0 4px 3px 8px}
-.coll[open] summary::after{transform:rotate(-135deg);margin-bottom:-2px}
-.coll summary .t{flex:1}
-.tray{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding-bottom:6px}
-.chip{
-  display:flex;flex-direction:column;align-items:center;gap:0;padding:6px 4px 7px;border:0;border-radius:14px;
-  background:var(--chip);color:var(--ink);font:inherit;font-size:12.5px;line-height:1.15;cursor:pointer;text-align:center;
-}
-.chip:hover{background:var(--chip-hover)}
-.chip img{width:64px;height:82px;object-fit:contain}
-.seg{display:grid;grid-template-columns:repeat(3,1fr);background:var(--chip);border-radius:12px;padding:3px}
-.seg button{border:0;background:transparent;color:var(--ink);font:inherit;font-size:13.5px;padding:6px 2px;border-radius:9px;cursor:pointer}
-.seg button[aria-checked="true"]{background:var(--on);color:var(--on-ink);font-weight:600}
-.row{display:flex;align-items:center;gap:10px;margin-top:14px}
-.row label{flex:0 0 auto;font-weight:500}
-input[type=range]{flex:1;accent-color:var(--on);min-width:0}
-.toggles{display:flex;gap:18px;margin-top:12px}
-.toggles label{display:flex;align-items:center;gap:6px;cursor:pointer}
-input[type=checkbox]{accent-color:var(--on);width:16px;height:16px}
-.btn{display:block;width:100%;margin-top:14px;padding:10px;border:0;border-radius:14px;font:inherit;font-weight:600;cursor:pointer;background:var(--on);color:var(--on-ink)}
-.ghost{border:0;background:transparent;color:var(--muted);font:inherit;cursor:pointer;padding:4px 6px;border-radius:8px}
-.ghost:hover{color:var(--ink)}
-#sel{margin-top:16px;padding-top:4px;border-top:1px solid var(--line)}
-#sel[hidden]{display:none}
-#sel h2{color:var(--ink);font-size:16px}
-.row input[type=text],.row input[type=number]{flex:1;min-width:0;font:inherit;font-size:15px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink)}
-.jseg{grid-template-columns:repeat(5,1fr);margin-top:12px}
-.jseg button{font-size:12.5px;text-transform:capitalize}
-.sw{display:grid;grid-template-columns:repeat(8,1fr);gap:6px;margin-top:10px}
-.sw button{aspect-ratio:1;border-radius:50%;border:2px solid transparent;cursor:pointer;padding:0}
-.sw button[aria-checked="true"]{border-color:var(--ink)}
-#jed[hidden]{display:none}
-.import{display:flex;align-items:center;justify-content:center;margin-top:10px;padding:9px;border-radius:14px;border:1.5px dashed var(--line);cursor:pointer;font-weight:600}
-.import:hover{background:var(--chip)}
-.import:focus-within{outline:2px solid var(--focus);outline-offset:2px}
-.note{margin:6px 2px 0;font-size:13px;color:var(--muted)}
-.note:empty{display:none}
-#capRow{cursor:pointer;gap:8px}
-#imgOpts[hidden]{display:none}
-.caps{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
-.caps.fin{grid-template-columns:repeat(7,1fr);margin-top:8px}
-.caps.fin button{padding:7px 0}
-.caps.fin span{font-size:10.5px}
-.caps.cd button{padding:8px 2px}
-.caps[hidden],#capNote[hidden]{display:none}
-.caps.cd button:first-child{grid-column:span 2}
-.caps button{border:0;background:var(--chip);color:var(--ink);font:inherit;font-size:12.5px;line-height:1.1;padding:7px 2px;border-radius:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
-.caps button i{width:16px;height:16px;border-radius:50%;display:block;box-shadow:inset -2px -3px 5px rgba(0,0,0,.35),inset 2px 2px 4px rgba(255,255,255,.5)}
-.caps button[aria-checked="true"]{background:var(--on);color:var(--on-ink);font-weight:600}
-select{font:inherit;font-size:15px;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink);flex:1;min-width:0}
-#jcustom[hidden],#ofinRow[hidden]{display:none}
-.danger{background:transparent;color:var(--accent);border:1.5px solid currentColor}
-#show{
-  position:fixed;z-index:3;right:16px;bottom:calc(16px + env(safe-area-inset-bottom,0px));
-  border:1px solid var(--line);background:var(--panel);color:var(--ink);font:inherit;font-weight:600;
-  padding:9px 16px;border-radius:999px;cursor:pointer;box-shadow:0 10px 30px -14px rgba(0,0,0,.5);
-}
-#show[hidden]{display:none}
 #err{position:fixed;left:16px;bottom:16px;z-index:4;max-width:40ch;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 14px}
 #err[hidden]{display:none}
-button:focus-visible,input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
-/* v1.1: pull actions, settings, welcome */
-#acts[hidden],#setts[hidden],#welcome[hidden],.act[hidden],.act [hidden],#setts [hidden],#welcome [hidden],#addLong[hidden]{display:none}
-.sub{font-size:13.5px;font-weight:600;color:var(--muted);margin:16px 2px 4px}
-.act{margin-top:6px}
-.act .row{margin-top:8px}
-.act .row label{min-width:88px}
-.mini{border:0;border-radius:10px;background:var(--chip);color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;padding:7px 12px;cursor:pointer;white-space:nowrap}
-.mini:hover{background:var(--chip-hover)}
-.mini:disabled,select:disabled,textarea:disabled,.act input:disabled{opacity:.5;cursor:default}
-.mini.wide{flex:1}
-.ainfo{display:flex;align-items:center;gap:8px;margin:8px 2px 0;font-size:14px;font-weight:500;min-width:0}
-.ainfo img{width:20px;height:20px;object-fit:contain;flex:0 0 auto}
-.ainfo img:not([src]){display:none}
-.ainfo span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.ainfo::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--on);flex:0 0 auto}
-.act textarea{display:block;width:100%;margin-top:8px;font:inherit;font-size:14.5px;line-height:1.3;padding:7px 10px;border-radius:10px;border:1px solid var(--line);background:var(--chip);color:var(--ink);resize:vertical;min-height:62px}
-.arow2{display:flex;justify-content:space-between;align-items:center;margin-top:6px}
-.count{font-size:12px;color:var(--muted)}
-.note.err{color:var(--accent)}
-#addLong{margin-top:8px;padding-left:2px}
-.card{background:var(--chip);border-radius:16px;padding:12px 14px 14px;margin:4px 0 10px}
-.card strong{font-size:16.5px;font-weight:700}
-.card p{margin:6px 0 0;font-size:14px;line-height:1.35}
-.kb{list-style:none;margin:10px 0 2px;padding:0;font-size:14px;display:grid;gap:6px}
-.kb li{display:flex;align-items:baseline;gap:8px}
-.kb li kbd{flex:0 0 auto}
-kbd{font:inherit;font-size:12.5px;font-weight:600;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:1px 7px;white-space:nowrap}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.card .btn{margin-top:10px;padding:8px}
-.btn.quiet{background:transparent;color:var(--ink);border:1.5px solid var(--line)}
-.kbrow{display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px;margin-top:10px}
-.kbrow span{flex:0 0 100%;font-weight:500;font-size:14.5px;padding-left:2px}
-.keys{flex:1;border:1px solid var(--line);background:var(--chip);color:var(--ink);font:inherit;font-size:13.5px;font-weight:600;padding:7px 10px;border-radius:10px;cursor:pointer;text-align:center}
-.keys:hover{background:var(--chip-hover)}
-.keys[aria-pressed="true"]{border-color:var(--on);box-shadow:0 0 0 1px var(--on);color:var(--on)}
-.seg.pair{grid-template-columns:1fr 1fr}
-.seg button:disabled{opacity:.45;cursor:default}
-.chk{display:flex;align-items:flex-start;gap:8px;margin-top:12px;cursor:pointer;line-height:1.3}
-.chk input{margin-top:2px;flex:0 0 auto}
-.chk:has(input:disabled){opacity:.55;cursor:default}
-#setts .sgrp{padding-bottom:6px}
-select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 #pill,#toast{position:fixed;left:0;top:0;z-index:2;pointer-events:none;background:var(--panel);color:var(--ink);border:1px solid var(--line);white-space:nowrap;opacity:0;transition:opacity .16s ease;-webkit-backdrop-filter:blur(14px);backdrop-filter:blur(14px)}
 #pill{display:flex;align-items:center;gap:7px;padding:5px 13px 5px 11px;border-radius:999px;font-size:14px;font-weight:600;box-shadow:0 10px 26px -12px rgba(0,0,0,.6)}
 #pill::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--on);flex:0 0 auto}
@@ -192,109 +41,13 @@ select:focus-visible,textarea:focus-visible{outline:2px solid var(--focus);outli
 #toast{padding:5px 11px;border-radius:10px;font-size:13px;font-weight:500;max-width:min(46ch,calc(100vw - 32px));overflow:hidden;text-overflow:ellipsis}
 #toast.bad{color:var(--accent)}
 @media (prefers-reduced-motion:reduce){#pill,#toast{transition:none}}
-@media (max-width:640px){#hint{top:32%}#hint small{display:none}}
-@media (prefers-reduced-motion:reduce){#hint{transition:none}}
 </style>
 </head>
 <body>
-<canvas id="c" aria-label="Hanging charms. Drag a charm to swing it."></canvas>
+<canvas id="c" aria-label="Hanging charms. Drag a charm to swing it. Double-click one to open Charm Line."></canvas>
 <canvas id="g" aria-hidden="true"></canvas>
-
-<aside id="panel" aria-label="Charm controls">
-  <header><strong>Charm Line</strong><button class="ghost" id="hide">Close</button></header>
-  <p class="note" id="kbdNote" style="margin:0 2px 6px">Reopen anytime from the tray icon, or press Ctrl+Shift+H (⌘⇧H on Mac).</p>
-  <div id="welcome" class="card" hidden role="region" aria-labelledby="wTitle">
-    <strong id="wTitle">Welcome to Charm Line</strong>
-    <p>Little charms hang from the top of your screen. Drag one to swing it. Pick a charm and choose what happens when you pull it down, like opening an app or a website.</p>
-    <ul class="kb"><li id="wT"><kbd id="wToggle"></kbd> shows or hides the charms</li><li id="wP"><kbd id="wPanel"></kbd> opens this panel</li><li>The tray icon always works too.</li></ul>
-    <div id="wLogin"><p>Start Charm Line when you sign in?</p><div class="two"><button class="btn" id="wYes" type="button">Yes</button><button class="btn quiet" id="wNo" type="button">Not now</button></div></div>
-    <p class="note" id="wNote"></p>
-    <button class="btn" id="wOk" type="button" hidden>Got it</button>
-  </div>
-  <div id="colls"></div>
-  <label class="import"><input type="file" id="file" accept="image/png,image/webp,image/jpeg,image/svg+xml,.svg" hidden>Import an image (PNG or SVG)</label>
-  <p class="note" id="imsg" role="status"></p>
-  <h2>Bead cap</h2>
-  <div class="caps cd" id="capd" role="radiogroup" aria-label="Bead cap design"></div>
-  <div class="caps fin" id="caps" role="radiogroup" aria-label="Bead cap finish"></div>
-  <p class="note" id="capNote">Each charm wears a cap made for it. Pick a design above to put the same cap on every charm.</p>
-  <h2>Rope</h2>
-  <div class="seg" role="radiogroup" aria-label="Rope style" id="ropes">
-    <button role="radio" data-rope="thread">Golden thread</button>
-    <button role="radio" data-rope="chain">Silver chain</button>
-    <button role="radio" data-rope="neon">Neon</button>
-  </div>
-  <div class="row"><label for="size">Size</label><input type="range" id="size" min="0.6" max="1.6" step="0.05"></div>
-  <div class="toggles">
-    <label><input type="checkbox" id="sound"> Sound</label>
-    <label><input type="checkbox" id="wind"> Mouse breeze</label>
-  </div>
-  <button class="btn" id="nudge">Nudge everything</button>
-  <details class="coll" id="setts" hidden>
-    <summary><span class="t">Settings</span><span></span></summary>
-    <div class="sgrp">
-      <h3 class="sub">Shortcuts</h3>
-      <div class="kbrow"><span id="kbl-toggle">Show or hide charms</span><button class="keys" type="button" data-sc="toggle" aria-describedby="kbl-toggle"></button><button class="ghost" type="button" data-clr="toggle" aria-label="Clear the show or hide shortcut">Clear</button></div>
-      <p class="note err" id="scErr-toggle" role="alert"></p>
-      <div class="kbrow"><span id="kbl-panel">Open this panel</span><button class="keys" type="button" data-sc="panel" aria-describedby="kbl-panel"></button><button class="ghost" type="button" data-clr="panel" aria-label="Clear the open panel shortcut">Clear</button></div>
-      <p class="note err" id="scErr-panel" role="alert"></p>
-      <p class="note">Click a shortcut, then press the new keys. Esc stops.</p>
-      <h3 class="sub">Where charms appear</h3>
-      <div class="seg pair" id="vis" role="radiogroup" aria-label="Where charms appear"><button role="radio" type="button" data-v="top">Over everything</button><button role="radio" type="button" data-v="desktop">Desktop only</button></div>
-      <p class="note" id="visNote"></p>
-      <label class="chk" id="ahRow"><input type="checkbox" id="autoHide"> Hide when an app is fullscreen</label>
-      <label class="chk" id="hcRow"><input type="checkbox" id="hideCap"> Hide from screen sharing and recordings</label>
-      <label class="chk" id="loginRow"><input type="checkbox" id="login"> Start Charm Line when I sign in</label>
-      <p class="note" id="loginNote"></p>
-      <p class="note err" id="setErr" role="alert"></p>
-    </div>
-  </details>
-  <section id="sel" hidden>
-    <h2 id="selName"></h2>
-    <div class="row"><label for="len">Rope length</label><input type="range" id="len" min="60" max="420" step="5"></div>
-    <div id="jed" hidden>
-      <div class="row"><label for="jname">Name</label><input type="text" id="jname" maxlength="12" placeholder="On the back" autocomplete="off"></div>
-      <div class="row"><label for="jnum">Number</label><input type="number" id="jnum" min="0" max="99"></div>
-      <div class="row"><label for="jteam">Kit</label><select id="jteam"></select></div>
-      <div id="jcustom">
-        <div class="seg jseg" id="jstyle" role="radiogroup" aria-label="Pattern"></div>
-        <div class="sw" id="jcolors" role="radiogroup" aria-label="Colors"></div>
-      </div>
-    </div>
-    <div class="row"><label for="ocap">Cap</label><select id="ocap"></select></div>
-    <div class="row" id="ofinRow"><label for="ofin">Finish</label><select id="ofin"></select></div>
-    <div id="imgOpts" hidden><label class="row" id="capRow"><input type="checkbox" id="capOn"> Bead cap</label></div>
-    <div id="acts" hidden>
-      <div id="actRows"></div>
-      <button class="ghost" id="addLong" type="button">+ Add long-pull action</button>
-      <p class="note" id="actHint"></p>
-    </div>
-    <button class="btn danger" id="remove">Remove charm</button>
-    <button class="ghost" id="forget" hidden style="margin-top:8px">Delete this image from the tray</button>
-  </section>
-</aside>
-<button id="show" hidden>Controls</button>
 <div id="pill" aria-hidden="true"><span></span></div>
 <div id="toast" role="status" aria-live="polite"></div>
-<template id="actTpl">
-  <div class="act">
-    <div class="row"><label class="alab"></label><select class="akind">
-      <option value="">Nothing (just swings)</option>
-      <option value="url">Open a website</option>
-      <option value="app">Open an app</option>
-      <option value="file">Open a file</option>
-      <option value="folder">Open a folder</option>
-      <option value="copy">Copy text</option>
-      <option value="toggle">Hide charms</option>
-    </select></div>
-    <div class="ainfo" hidden><img alt=""><span></span></div>
-    <div class="row aurl" hidden><input type="text" inputmode="url" placeholder="https://example.com" autocomplete="off" spellcheck="false" maxlength="2048" aria-label="Website address"><button class="mini" type="button">Save</button></div>
-    <div class="row apick" hidden><button class="mini wide" type="button">Choose…</button></div>
-    <div class="acopy" hidden><textarea maxlength="500" rows="3" placeholder="Text to copy when you pull" aria-label="Text to copy"></textarea><div class="arow2"><span class="count"></span><button class="mini" type="button">Save</button></div></div>
-    <div class="row atry" hidden><button class="mini try" type="button">Try it</button></div>
-    <p class="note amsg" role="status"></p>
-  </div>
-</template>
 <div id="err" hidden>3D rendering isn't available in this browser. Turn on hardware acceleration and reload.</div>
 
 <script src="three.min.js"></script>

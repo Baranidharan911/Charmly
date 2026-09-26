@@ -2,7 +2,7 @@
 // Global shortcut registration with per-shortcut error reporting. globalShortcut is injected.
 const { validateAccelerator } = require('./validate');
 
-const NAMES = { toggle: 'show/hide charms', panel: 'open the panel' };
+const NAMES = { toggle: 'show/hide charms', panel: 'open Charm Line' };
 
 function createShortcuts({ globalShortcut, handlers, log = () => {} }) {
   let registered = {}; // name -> accelerator

@@ -1,7 +1,7 @@
 {
   "name": "charm-line",
   "productName": "Charm Line",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "description": "Physics-simulated 3D charms hanging on your desktop.",
   "main": "main.js",
   "author": "Manoj",
@@ -28,7 +28,7 @@
     "directories": { "output": "dist", "buildResources": "build" },
     "npmRebuild": false,
     "files": [
-      "main.js", "preload.js", "src/**/*", "renderer/**/*", "build/tray*.png", "build/icon.png",
+      "main.js", "preload.js", "preload-studio.js", "src/**/*", "renderer/**/*", "build/tray*.png", "build/icon.png",
       "!renderer/_test/**",
       "!node_modules/koffi/{doc,vendor,lib}/**"
     ],

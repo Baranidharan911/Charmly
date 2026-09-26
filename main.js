@@ -1,6 +1,6 @@
 const {
   app, BrowserWindow, Tray, Menu, screen, ipcMain, globalShortcut, nativeImage,
-  shell, dialog, clipboard, powerMonitor
+  shell, dialog, clipboard, powerMonitor, nativeTheme
 } = require('electron');
 const path = require('path');
 const os = require('os');
@@ -8,7 +8,9 @@ const { pathToFileURL } = require('url');
 const { createStore } = require('./src/settings');
 const { createActions } = require('./src/actions');
 const { createShortcuts } = require('./src/shortcuts');
-const { createLogin, APP_ID } = require('./src/login');
+const { createLogin, isHiddenLaunch, APP_ID } = require('./src/login');
+const { validateLineCmd } = require('./src/linecmd');
+const { createRelay, NOT_RESPONDING } = require('./src/linerelay');
 const V = require('./src/validate');
 const winPlatform = require('./src/platform-win');
 
@@ -22,17 +24,26 @@ if (isWin) app.setAppUserModelId(APP_ID);
 
 const RENDERER_FILE = path.join(__dirname, 'renderer', 'index.html');
 const RENDERER_URL = pathToFileURL(RENDERER_FILE).href;
+const STUDIO_FILE = path.join(__dirname, 'renderer', 'studio.html');
+const STUDIO_URL = pathToFileURL(STUDIO_FILE).href;
+const WEBSITE = 'https://luckonaline.netlify.app';
 
 let win = null, tray = null, hwnd = 0n;
+let studio = null, studioHwnd = 0n, studioLoaded = false, studioWantShow = false, pendingNav = null, quitting = false;
+let lastLineState = null;
 let store, actions, shortcuts, login, winApi = null, caps;
 let shortcutErrors = {}, loginState = false;
 let pollTimer = null, deskTimer = null, fsTimer = null;
 // Visibility: user choice is session-only (always shown on launch); auto/power hides are layered on top.
 let userShown = true, autoHidden = false, fsOverride = false, powerHidden = false, lastShown = null;
-let panelOpen = false, lastZ = null;
+let lastZ = null;
 
 const isVisible = () => userShown && !autoHidden && !powerHidden;
 const send = (ch, v) => { if (win && !win.isDestroyed()) win.webContents.send(ch, v); };
+const studioAlive = () => !!studio && !studio.isDestroyed();
+const sendStudio = (ch, v) => { if (studioAlive() && studioLoaded) studio.webContents.send(ch, v); };
+const sendAll = (ch, v) => { send(ch, v); sendStudio(ch, v); };
+const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
 function displayGeom() {
   const d = screen.getPrimaryDisplay();
@@ -66,13 +77,11 @@ function publicSettings() {
   };
 }
 
-function broadcastSettings() { send('settings', publicSettings()); buildTrayMenu(); }
+function broadcastSettings() { sendAll('settings', publicSettings()); buildTrayMenu(); }
 
 function applyShortcuts(extraErrors = {}) {
   shortcutErrors = { ...shortcuts.apply(store.data.shortcuts), ...extraErrors };
 }
-
-const isObj = (o) => !!o && typeof o === 'object' && !Array.isArray(o);
 
 function patchSettings(partial) {
   if (!isObj(partial)) return publicSettings();
@@ -86,7 +95,7 @@ function patchSettings(partial) {
       const r = V.validateAccelerator(partial.shortcuts[k]);
       if (!r.ok) { errs[k] = r.error; continue; }
       const other = k === 'toggle' ? 'panel' : 'toggle';
-      if (r.value && r.value === sc[other]) { errs[k] = `Already used to ${other === 'toggle' ? 'show/hide charms' : 'open the panel'}.`; continue; }
+      if (r.value && r.value === sc[other]) { errs[k] = `Already used to ${other === 'toggle' ? 'show/hide charms' : 'open Charm Line'}.`; continue; }
       sc[k] = r.value;
     }
     next.shortcuts = sc;
@@ -122,7 +131,7 @@ function applyShown(initial = false) {
     // Let the page go "hidden" so rAF / GPU work stops while hidden.
     win.webContents.setBackgroundThrottling(true);
   }
-  if (!initial) send('shown', vis);
+  if (!initial) sendAll('shown', vis);
   buildTrayMenu();
 }
 
@@ -136,41 +145,15 @@ function toggleCharms() {
   if (isVisible()) { userShown = false; applyShown(); } else showNow();
 }
 
-function togglePanel() {
-  if (!win) return;
-  if (!isVisible()) showNow();
-  send('toggle-panel');
-}
-
-function openPanel() {
-  if (!win) return;
-  showNow();
-  if (!panelOpen) send('toggle-panel');
-}
-
-function setPanelOpen(open) {
-  panelOpen = !!open;
-  if (!win) return;
-  if (isWin || isMac) {
-    if (panelOpen) { win.setFocusable(true); win.focus(); }
-    else { if (win.isFocused()) win.blur(); win.setFocusable(false); }
-  } else if (panelOpen) win.focus();
-  lastZ = null; deskTick();
-}
-
 // Desktop-only mode (Windows + koffi): sit at the bottom, come up when the desktop is foreground.
 const KEEP_Z_CLASSES = new Set(['Shell_TrayWnd', 'Shell_SecondaryTrayWnd', 'NotifyIconOverflowWindow', 'TopLevelWindowForOverflowXamlIsland', '#32768']);
 function deskTick() {
   if (!win || !winApi || mode() !== 'desktop' || !isVisible()) return;
-  let want;
-  if (panelOpen) want = 'top';
-  else {
-    const fg = winApi.foreground();
-    if (!fg || fg === hwnd) return;
-    const cls = winApi.className(fg);
-    if (KEEP_Z_CLASSES.has(cls)) return; // tray / taskbar / menus: don't flicker
-    want = winApi.isDesktopClass(cls) ? 'top' : 'bottom';
-  }
+  const fg = winApi.foreground();
+  if (!fg || fg === hwnd) return;
+  const cls = winApi.className(fg);
+  if (KEEP_Z_CLASSES.has(cls)) return; // tray / taskbar / menus: don't flicker
+  const want = winApi.isDesktopClass(cls) ? 'top' : 'bottom';
   if (want === lastZ) return;
   lastZ = want;
   if (want === 'top') winApi.toTop(hwnd); else winApi.toBottom(hwnd);
@@ -193,7 +176,7 @@ function applyVisibilityMode() {
 function fsTick() {
   if (!winApi) return;
   const fg = winApi.foreground();
-  if (fg && fg === hwnd) return;
+  if (fg && (fg === hwnd || fg === studioHwnd)) return;
   const full = winApi.fullscreenInFront(fg);
   if (!full) {
     fsOverride = false;
@@ -215,7 +198,7 @@ function applyCapture() {
   if (win) win.setContentProtection(!!(caps.capture && store.data.hideFromCapture));
 }
 
-// ---------- window ----------
+// ---------- overlay window ----------
 function createOverlay() {
   const { b, wa } = displayGeom();
   win = new BrowserWindow({
@@ -223,7 +206,7 @@ function createOverlay() {
     transparent: true, frame: false, resizable: false, movable: false,
     minimizable: false, maximizable: false, fullscreenable: false,
     skipTaskbar: true, hasShadow: false, alwaysOnTop: true, show: false,
-    focusable: isLinux, // win32/darwin: never activate unless the panel is open
+    focusable: isLinux, // win32/darwin: never activates; every control lives in the Studio window
     backgroundColor: '#00000000', title: 'Charm Line',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -237,14 +220,23 @@ function createOverlay() {
   win.webContents.on('will-navigate', (e) => e.preventDefault());
   win.webContents.on('will-redirect', (e) => e.preventDefault());
   win.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
+  win.webContents.on('did-start-loading', () => relay.failAll());
+  win.webContents.on('render-process-gone', () => relay.failAll());
   applyCapture();
   win.loadFile(RENDERER_FILE, { query: { top: String(Math.max(0, wa.y - b.y)) } });
-  win.once('ready-to-show', () => {
+  // A transparent page with nothing painted yet can take seconds to reach ready-to-show, and a hidden
+  // window gets no requestAnimationFrame: show as soon as the page has loaded (nothing to flash).
+  let shown = false;
+  const firstShow = () => {
+    if (shown || !win) return;
+    shown = true;
     applyShown(true);
     applyVisibilityMode();
     applyAutoHide();
-  });
-  win.on('closed', () => { win = null; });
+  };
+  win.once('ready-to-show', firstShow);
+  win.webContents.once('did-finish-load', firstShow);
+  win.on('closed', () => { win = null; relay.failAll(); });
 
   if (isLinux) {
     let last = '';
@@ -263,6 +255,64 @@ function fitToDisplay() {
   win.webContents.send('top-inset', Math.max(0, wa.y - b.y));
 }
 
+// ---------- Studio window ----------
+const THEME = { light: { bg: '#f3ecdf', ink: '#231a13' }, dark: { bg: '#141210', ink: '#f1e8d4' } };
+const theme = () => THEME[nativeTheme.shouldUseDarkColors ? 'dark' : 'light'];
+// Transparent overlay: the page's own title-bar background shows behind the caption buttons.
+const captionColors = () => ({ color: '#00000000', symbolColor: theme().ink, height: 44 });
+
+function createStudio() {
+  studioLoaded = false;
+  studio = new BrowserWindow({
+    width: 1120, height: 740, minWidth: 900, minHeight: 600, show: false,
+    title: 'Charm Line', icon: path.join(__dirname, 'build', 'icon.png'), backgroundColor: theme().bg,
+    ...(isMac ? { titleBarStyle: 'hiddenInset' } : { titleBarStyle: 'hidden', titleBarOverlay: captionColors() }),
+    webPreferences: {
+      preload: path.join(__dirname, 'preload-studio.js'),
+      contextIsolation: true, nodeIntegration: false, sandbox: true,
+      additionalArguments: ['--charmline-version=' + app.getVersion()]
+    }
+  });
+  try { studioHwnd = isWin ? winPlatform.hwndFromBuffer(studio.getNativeWindowHandle()) : 0n; } catch { studioHwnd = 0n; }
+  const wc = studio.webContents;
+  wc.on('will-navigate', (e) => e.preventDefault());
+  wc.on('will-redirect', (e) => e.preventDefault());
+  wc.setWindowOpenHandler(() => ({ action: 'deny' }));
+  wc.on('did-start-loading', () => { studioLoaded = false; });
+  wc.on('did-finish-load', () => {
+    studioLoaded = true;
+    if (pendingNav) { sendStudio('navigate', pendingNav); pendingNav = null; }
+    if (studioWantShow) showStudioWindow();
+  });
+  // Close = hide; the app keeps running in the tray. Real quit: tray "Quit" / app quit.
+  studio.on('close', (e) => { if (!quitting) { e.preventDefault(); studio.hide(); } });
+  studio.on('closed', () => { studio = null; studioHwnd = 0n; studioLoaded = false; });
+  studio.loadFile(STUDIO_FILE);
+}
+
+function showStudioWindow() {
+  if (!studioAlive()) return;
+  studioWantShow = false;
+  if (studio.isMinimized()) studio.restore();
+  studio.show();
+  studio.focus();
+  if (isMac) app.focus({ steal: true });
+}
+
+/** Show the Studio (creating it if needed). nav = { page: 'line', cid? } reaches studio.onNavigate. */
+function openStudio(nav) {
+  if (!studioAlive()) createStudio();
+  // Not loaded yet: sent from did-finish-load (preload-studio.js buffers it until onNavigate is registered).
+  if (nav) { if (studioLoaded) sendStudio('navigate', nav); else pendingNav = nav; }
+  if (studioLoaded) showStudioWindow(); else studioWantShow = true;
+}
+
+function applyStudioTheme() {
+  if (!studioAlive()) return;
+  studio.setBackgroundColor(theme().bg);
+  if (!isMac) { try { studio.setTitleBarOverlay(captionColors()); } catch (e) { log('titleBarOverlay failed', e.message); } }
+}
+
 // ---------- tray ----------
 const accel = (s) => (s ? { accelerator: s, registerAccelerator: false } : {});
 
@@ -272,7 +322,7 @@ function buildTrayMenu() {
   const showLabel = vis ? 'Hide charms' : userShown ? 'Show charms now' : 'Show charms';
   const setMode = (m) => { patchSettings({ visibility: m }); broadcastSettings(); };
   const template = [
-    { label: 'Open charm panel', ...accel(d.shortcuts.panel), click: togglePanel },
+    { label: 'Open Charm Line', ...accel(d.shortcuts.panel), click: () => openStudio() },
     { label: showLabel, ...accel(d.shortcuts.toggle), click: toggleCharms }
   ];
   if (caps.desktopOnly) {
@@ -286,7 +336,7 @@ function buildTrayMenu() {
     template.push({ label: 'Start at login', type: 'checkbox', checked: loginState, click: (i) => { patchSettings({ openAtLogin: i.checked }); broadcastSettings(); } });
     template.push({ type: 'separator' });
   }
-  template.push({ label: 'Quit Charm Line', click: () => app.quit() });
+  template.push({ label: 'Quit', click: () => app.quit() });
   tray.setContextMenu(Menu.buildFromTemplate(template));
   const why = vis ? '' : autoHidden ? ' (hidden for a fullscreen app)' : powerHidden ? '' : ' (hidden)';
   tray.setToolTip('Charm Line' + (mode() === 'desktop' ? ' - desktop only' : '') + why);
@@ -296,53 +346,100 @@ function createTray() {
   const icon = nativeImage.createFromPath(path.join(__dirname, 'build', isMac ? 'trayTemplate.png' : 'tray.png'));
   if (isMac) icon.setTemplateImage(true);
   tray = new Tray(icon);
-  tray.on('click', togglePanel);
+  tray.on('click', () => openStudio());
   buildTrayMenu();
 }
 
 // ---------- IPC ----------
-function sameUrlPrefix(u) {
+function sameUrlPrefix(u, base) {
   if (typeof u !== 'string') return false;
-  let a = u, b = RENDERER_URL;
+  let a = u, b = base;
   try { a = decodeURI(a); b = decodeURI(b); } catch { return false; }
   if (isWin || isMac) { a = a.toLowerCase(); b = b.toLowerCase(); }
   return a === b || a.startsWith(b + '?') || a.startsWith(b + '#');
 }
 
-function trusted(e) {
-  return !!win && e.sender === win.webContents && !!e.senderFrame && sameUrlPrefix(e.senderFrame.url);
+function trustedOverlay(e) {
+  return !!win && e.sender === win.webContents && !!e.senderFrame && sameUrlPrefix(e.senderFrame.url, RENDERER_URL);
 }
+function trustedStudio(e) {
+  return studioAlive() && e.sender === studio.webContents && !!e.senderFrame && sameUrlPrefix(e.senderFrame.url, STUDIO_URL);
+}
+// Which window may use a channel.
+const OVERLAY = 1, STUDIO = 2, BOTH = OVERLAY | STUDIO;
+const allowed = (e, who) => ((who & OVERLAY) && trustedOverlay(e)) || ((who & STUDIO) && trustedStudio(e));
 
 const MAX_ARG_STRING = 10000;
 const argsOk = (args) => args.every((a) => typeof a !== 'string' || a.length <= MAX_ARG_STRING);
 
-function handle(ch, fn) {
+function handle(ch, fn, who) {
   ipcMain.handle(ch, async (e, ...args) => {
-    if (!trusted(e)) throw new Error('Not allowed');
+    if (!allowed(e, who)) throw new Error('Not allowed');
     if (!argsOk(args)) return { ok: false, error: 'Too long.' };
     return fn(...args);
   });
 }
 
+// Studio -> overlay line commands: correlated by id, 5 s timeout -> "Charms are not responding".
+const relay = createRelay({
+  send: (msg) => {
+    if (!win || win.isDestroyed() || win.webContents.isCrashed()) return false; // loading: preload.js buffers it
+    win.webContents.send('line:cmd', msg);
+    return true;
+  }
+});
+
 function registerIpc() {
   ipcMain.on('set-ignore', (e, ignore) => {
-    if (!trusted(e) || !win) return;
+    if (!trustedOverlay(e) || !win) return;
     win.setIgnoreMouseEvents(!!ignore, { forward: true });
   });
-  ipcMain.on('panel-opened', (e, open) => { if (trusted(e)) setPanelOpen(open === true); });
-  ipcMain.on('focus-overlay', (e) => { if (trusted(e)) setPanelOpen(true); }); // v1.0 channel
+  // Overlay -> main: replies, state pushes, double-click on a charm.
+  ipcMain.on('line:reply', (e, id, result) => { if (trustedOverlay(e) && Number.isSafeInteger(id)) relay.reply(id, result); });
+  ipcMain.on('line:state', (e, state) => {
+    if (!trustedOverlay(e) || !isObj(state) || !isObj(state.S) || !Array.isArray(state.charms)) return;
+    lastLineState = state;
+    sendStudio('line', state); // no Studio page loaded: dropped
+  });
+  ipcMain.on('overlay:openStudio', (e, cid) => {
+    if (!trustedOverlay(e)) return;
+    openStudio(V.isCid(cid) ? { page: 'line', cid } : { page: 'line' });
+  });
 
-  handle('settings:get', () => publicSettings());
-  handle('settings:patch', (partial) => patchSettings(partial));
-  handle('actions:list', () => actions.list());
-  handle('actions:setUrl', (cid, slot, url, label) => actions.setUrl(cid, slot, url, label));
-  handle('actions:pick', (cid, slot, kind) => actions.pick(cid, slot, kind));
-  handle('actions:setCopy', (cid, slot, text, label) => actions.setCopy(cid, slot, text, label));
-  handle('actions:setToggle', (cid, slot) => actions.setToggle(cid, slot));
-  handle('actions:clear', (cid, slot) => actions.clear(cid, slot));
-  handle('actions:forget', (cid) => actions.forget(cid));
-  handle('actions:trigger', (cid, slot) => actions.trigger(cid, slot));
-  handle('actions:test', (cid, slot) => actions.test(cid, slot));
+  // Any action / binding change -> both windows refresh (studio.onActionsChanged, the overlay's cache).
+  const changing = (fn) => async (...a) => {
+    const r = await fn(...a);
+    if (r && r.ok) sendAll('actions:changed');
+    return r;
+  };
+
+  handle('settings:get', () => publicSettings(), BOTH);
+  handle('settings:patch', (partial) => patchSettings(partial), STUDIO);
+  handle('actions:list', () => actions.list(), BOTH);
+  handle('actions:setUrl', changing((cid, slot, url, label) => actions.setUrl(cid, slot, url, label)), STUDIO);
+  handle('actions:pick', changing((cid, slot, kind) => actions.pick(cid, slot, kind)), STUDIO);
+  handle('actions:setCopy', changing((cid, slot, text, label) => actions.setCopy(cid, slot, text, label)), STUDIO);
+  handle('actions:setToggle', changing((cid, slot) => actions.setToggle(cid, slot)), STUDIO);
+  handle('actions:clear', changing((cid, slot) => actions.clear(cid, slot)), STUDIO);
+  handle('actions:test', (cid, slot) => actions.test(cid, slot), STUDIO);
+  handle('actions:forget', changing((cid) => actions.forget(cid)), OVERLAY);
+  handle('actions:trigger', (cid, slot) => actions.trigger(cid, slot), OVERLAY);
+
+  handle('line:cmd', (op, args) => {
+    const v = validateLineCmd(op, args);
+    if (!v.ok) return v;
+    if (v.op === 'highlight' && !isVisible()) showNow(); // "Show me" needs the charms on screen
+    return relay.request(v.op, v.args);
+  }, STUDIO);
+  handle('line:getState', async () => {
+    const r = await relay.request('getState', {});
+    if (r.ok && isObj(r.state)) { lastLineState = r.state; return r.state; }
+    if (lastLineState) return lastLineState;
+    throw new Error(r.error || NOT_RESPONDING);
+  }, STUDIO);
+  handle('charms:toggle', () => { toggleCharms(); return isVisible(); }, STUDIO);
+  handle('charms:shown', () => isVisible(), STUDIO);
+  handle('app:openWebsite', async () => { await shell.openExternal(WEBSITE); return true; }, STUDIO);
 }
 
 // ---------- startup ----------
@@ -367,20 +464,27 @@ function init() {
 
   actions = createActions({
     store, shell, dialog, clipboard, log,
-    getWin: () => win,
+    // Pickers and confirmations belong to the Studio while it is the focused window.
+    getWin: () => (studioAlive() && studio.isVisible() && studio.isFocused() ? studio : win),
     getIcon: async (p) => {
       const img = await app.getFileIcon(p, { size: 'normal' });
       return img && !img.isEmpty() ? img.toDataURL() : null;
     },
     onToggle: () => { userShown = false; applyShown(); }
   });
-  shortcuts = createShortcuts({ globalShortcut, handlers: { toggle: toggleCharms, panel: togglePanel }, log });
+  shortcuts = createShortcuts({ globalShortcut, handlers: { toggle: toggleCharms, panel: () => openStudio() }, log });
 }
 
 if (!app.requestSingleInstanceLock()) {
   app.quit();
 } else {
-  app.on('second-instance', openPanel);
+  app.on('second-instance', (_e, argv) => {
+    if (!app.isReady() || isHiddenLaunch(argv)) return; // a sign-in launch while already running: stay quiet
+    showNow();
+    openStudio();
+  });
+  app.on('activate', () => { if (app.isReady() && store) openStudio(); }); // macOS: Dock / Finder relaunch
+  app.on('before-quit', () => { quitting = true; });
 
   app.whenReady().then(() => {
     if (isMac && app.dock) app.dock.hide();
@@ -390,6 +494,9 @@ if (!app.requestSingleInstanceLock()) {
     createTray();
     applyShortcuts();
     buildTrayMenu();
+    // Started at sign-in (--hidden): charms only. Otherwise the Studio opens (its onboarding on first run).
+    if (!isHiddenLaunch(process.argv, { app })) openStudio();
+    nativeTheme.on('updated', applyStudioTheme);
     screen.on('display-metrics-changed', fitToDisplay);
     screen.on('display-added', fitToDisplay);
     screen.on('display-removed', fitToDisplay);
@@ -407,4 +514,3 @@ if (!app.requestSingleInstanceLock()) {
   });
   app.on('window-all-closed', () => app.quit());
 }
-
