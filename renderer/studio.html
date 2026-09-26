@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; object-src 'none'; base-uri 'none'; form-action 'none'">
+<meta name="color-scheme" content="light dark">
+<title>Charm Line</title>
+<link rel="stylesheet" href="studio.css">
+</head>
+<body class="booting">
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="mark" viewBox="0 0 32 32"><path d="M2 5h28" stroke="#b8862f" stroke-width="2.6" stroke-linecap="round" fill="none"/><path d="M16 5v8" stroke="#b8862f" stroke-width="1.6" fill="none"/><circle cx="16" cy="14.5" r="2" fill="#e0b96c"/><circle cx="16" cy="23" r="7" fill="#1f4bd1"/><circle cx="16" cy="23" r="4.4" fill="#fff"/><circle cx="16" cy="23" r="2.6" fill="#7fb4ef"/><circle cx="16" cy="23" r="1.3" fill="#111"/></symbol>
+    <symbol id="i-line" viewBox="0 0 24 24"><path d="M3 4.5h18"/><path d="M8 4.5V9"/><circle cx="8" cy="12" r="3"/><path d="M16 4.5v7.5"/><circle cx="16" cy="15" r="3"/></symbol>
+    <symbol id="i-cat" viewBox="0 0 24 24"><rect x="4" y="4" width="6.5" height="6.5" rx="2"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="3.25"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="3.25"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="2"/></symbol>
+    <symbol id="i-img" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><circle cx="9" cy="10" r="1.8"/><path d="M4 17.5l4.5-4.5 3.5 3.5 2.5-2.5 5.5 5"/></symbol>
+    <symbol id="i-style" viewBox="0 0 24 24"><path d="M6 4h12M6 20h12"/><path d="M8 4v16M16 4v16"/><path d="M8 9.5l8-2.5M8 14l8-2.5M8 18.5l8-2.5"/></symbol>
+    <symbol id="i-pull" viewBox="0 0 24 24"><path d="M12 3v4.5"/><circle cx="12" cy="10.5" r="3"/><path d="M12 15v6M9 18l3 3 3-3"/></symbol>
+    <symbol id="i-set" viewBox="0 0 24 24"><path d="M4 7h8M16 7h4M4 17h4M12 17h8"/><circle cx="14" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></symbol>
+    <symbol id="i-about" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v5"/><path d="M12 8h.01"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4.5 7h15M9.5 7V5h5v2M6.5 7l1 12.5h9l1-12.5"/><path d="M10 11v5M14 11v5"/></symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24"><path d="M12 3.5v3M12 17.5v3M3.5 12h3M17.5 12h3M6 6l2 2M16 16l2 2M6 18l2-2M16 8l2-2"/><circle cx="12" cy="12" r="2.2"/></symbol>
+    <symbol id="i-wind" viewBox="0 0 24 24"><path d="M3 9h10.5a2.75 2.75 0 1 0-2.75-2.75"/><path d="M3 15h14a3 3 0 1 1-3 3"/><path d="M3 12h6"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><path d="M8 5.8v12.4a.8.8 0 0 0 1.2.7l9.6-6.2a.8.8 0 0 0 0-1.4L9.2 5.1A.8.8 0 0 0 8 5.8z"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M4.5 19.5h4l10-10a2.1 2.1 0 0 0-4-4l-10 10z"/><path d="M13.5 6.5l4 4"/></symbol>
+    <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9.5 6l6 6-6 6"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+    <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 15.5V4M7.5 8.5L12 4l4.5 4.5"/><path d="M4 15v3.5A1.5 1.5 0 0 0 5.5 20h13a1.5 1.5 0 0 0 1.5-1.5V15"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M14 10h.01M17.5 10h.01M7.5 14h9"/></symbol>
+    <symbol id="i-url" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.4 2.6 3.4 5.4 3.4 8.5s-1 5.9-3.4 8.5c-2.4-2.6-3.4-5.4-3.4-8.5s1-5.9 3.4-8.5z"/></symbol>
+    <symbol id="i-app" viewBox="0 0 24 24"><rect x="3.5" y="4.5" width="17" height="15" rx="3"/><path d="M3.5 9h17"/><path d="M7 6.8h.01M9.6 6.8h.01"/></symbol>
+    <symbol id="i-file" viewBox="0 0 24 24"><path d="M13.5 3.5H7.5a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h9a2 2 0 0 0 2-2V8.5z"/><path d="M13.5 3.5v5h5"/></symbol>
+    <symbol id="i-folder" viewBox="0 0 24 24"><path d="M3.5 7.5a2 2 0 0 1 2-2h4l2 2h7a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2h-13a2 2 0 0 1-2-2z"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="8.5" y="8.5" width="11" height="11" rx="2.5"/><path d="M15.5 8.5V6A1.5 1.5 0 0 0 14 4.5H6A1.5 1.5 0 0 0 4.5 6v8A1.5 1.5 0 0 0 6 15.5h2.5"/></symbol>
+    <symbol id="i-toggle" viewBox="0 0 24 24"><path d="M3.5 3.5l17 17"/><path d="M10.6 5.6c.5-.1.9-.1 1.4-.1 5 0 8.5 4.5 9 6.5-.3 1-1.2 2.5-2.6 3.9M6.6 6.6C4.6 8 3.4 10 3 12c.5 2 4 6.5 9 6.5 1.8 0 3.4-.6 4.7-1.4"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M3 12c.5-2 4-6.5 9-6.5s8.5 4.5 9 6.5c-.5 2-4 6.5-9 6.5S3.5 14 3 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-ext" viewBox="0 0 24 24"><path d="M14 4.5h5.5V10M19.5 4.5L11 13"/><path d="M17.5 14v4a1.5 1.5 0 0 1-1.5 1.5H6A1.5 1.5 0 0 1 4.5 18V8A1.5 1.5 0 0 1 6 6.5h4"/></symbol>
+    <symbol id="i-long" viewBox="0 0 24 24"><circle cx="12" cy="13" r="7.5"/><path d="M12 9v4l2.5 1.8M10 3h4"/></symbol>
+    <symbol id="i-alert" viewBox="0 0 24 24"><path d="M10.3 4.6L2.9 17.5A2 2 0 0 0 4.6 20.5h14.8a2 2 0 0 0 1.7-3L13.7 4.6a2 2 0 0 0-3.4 0z"/><path d="M12 9.5v4M12 16.8h.01"/></symbol>
+    <symbol id="i-clear" viewBox="0 0 24 24"><path d="M3 4.5h18"/><path d="M9 11l6 6M15 11l-6 6"/></symbol>
+    <symbol id="i-heart" viewBox="0 0 24 24"><path d="M12 19.5s-7.5-4.4-7.5-10A4.2 4.2 0 0 1 12 7a4.2 4.2 0 0 1 7.5 2.5c0 5.6-7.5 10-7.5 10z"/></symbol>
+    <filter id="neonGlow" x="-20%" y="-200%" width="140%" height="500%"><feGaussianBlur stdDeviation="2.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+  </defs>
+</svg>
+
+<div id="app" class="app">
+  <div class="cord" aria-hidden="true"></div>
+
+  <aside class="side" id="side" aria-label="Charm Line">
+    <div class="side-top">
+      <div class="brand"><svg class="brand-mark" aria-hidden="true"><use href="#mark"/></svg><span class="brand-name">Charm Line</span></div>
+    </div>
+    <nav class="nav" id="nav" aria-label="Sections">
+      <button type="button" class="nav-i" data-page="line" title="My line"><svg class="ic" aria-hidden="true"><use href="#i-line"/></svg><span class="nav-l">My line</span><span class="nav-badge" id="lineCount" aria-label=""></span></button>
+      <button type="button" class="nav-i" data-page="catalogue" title="Catalogue"><svg class="ic" aria-hidden="true"><use href="#i-cat"/></svg><span class="nav-l">Catalogue</span></button>
+      <button type="button" class="nav-i" data-page="images" title="Your images"><svg class="ic" aria-hidden="true"><use href="#i-img"/></svg><span class="nav-l">Your images</span></button>
+      <button type="button" class="nav-i" data-page="style" title="Style"><svg class="ic" aria-hidden="true"><use href="#i-style"/></svg><span class="nav-l">Style</span></button>
+      <button type="button" class="nav-i" data-page="pulls" title="Pull actions"><svg class="ic" aria-hidden="true"><use href="#i-pull"/></svg><span class="nav-l">Pull actions</span></button>
+      <div class="nav-sep" role="presentation"></div>
+      <button type="button" class="nav-i" data-page="settings" title="Settings"><svg class="ic" aria-hidden="true"><use href="#i-set"/></svg><span class="nav-l">Settings</span></button>
+      <button type="button" class="nav-i" data-page="about" title="About"><svg class="ic" aria-hidden="true"><use href="#i-about"/></svg><span class="nav-l">About</span></button>
+    </nav>
+    <div class="side-foot">
+      <label class="onscreen" id="onscreen" title="Charms on screen">
+        <span class="os-dot" aria-hidden="true"></span>
+        <span class="os-text"><span class="os-l">Charms on screen</span><kbd class="os-k" id="osKey"></kbd></span>
+        <input type="checkbox" class="switch" id="shownSw" role="switch" aria-label="Charms on screen">
+      </label>
+    </div>
+  </aside>
+
+  <header class="tbar" id="tbar">
+    <div class="tbar-title" id="tbarTitle" aria-hidden="true"></div>
+  </header>
+
+  <main class="main" id="main" tabindex="-1">
+    <div class="scroller" id="scroller">
+      <section class="page" id="p-welcome" data-page="welcome" hidden aria-labelledby="h-welcome"></section>
+      <section class="page" id="p-line" data-page="line" hidden aria-labelledby="h-line"></section>
+      <section class="page" id="p-catalogue" data-page="catalogue" hidden aria-labelledby="h-catalogue"></section>
+      <section class="page" id="p-images" data-page="images" hidden aria-labelledby="h-images"></section>
+      <section class="page" id="p-style" data-page="style" hidden aria-labelledby="h-style"></section>
+      <section class="page" id="p-pulls" data-page="pulls" hidden aria-labelledby="h-pulls"></section>
+      <section class="page" id="p-settings" data-page="settings" hidden aria-labelledby="h-settings"></section>
+      <section class="page" id="p-about" data-page="about" hidden aria-labelledby="h-about"></section>
+    </div>
+  </main>
+</div>
+
+<div class="nostudio" id="nostudio" hidden>
+  <div class="ns-card">
+    <svg class="ns-mark" aria-hidden="true"><use href="#mark"/></svg>
+    <h1>Open this inside the Charm Line app</h1>
+    <p>This is the Charm Line Studio. It needs the app around it to talk to your charms. Start Charm Line, then choose <b>Open Charm Line</b> from the tray icon.</p>
+    <p class="ns-fine">Don't have it yet? Get it at luckonaline.netlify.app</p>
+  </div>
+</div>
+
+<div class="toasts" id="toasts" role="status" aria-live="polite"></div>
+
+<dialog class="dlg" id="dlg" aria-labelledby="dlgT" aria-describedby="dlgM">
+  <div class="dlg-in">
+    <div class="dlg-ic" aria-hidden="true"><svg class="ic"><use href="#i-alert"/></svg></div>
+    <h2 id="dlgT"></h2>
+    <p id="dlgM"></p>
+    <div class="dlg-b">
+      <button type="button" class="btn" id="dlgNo">Cancel</button>
+      <button type="button" class="btn danger-solid" id="dlgOk"></button>
+    </div>
+  </div>
+</dialog>
+
+<script src="studio.js"></script>
+</body>
+</html>
