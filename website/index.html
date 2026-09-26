@@ -164,6 +164,66 @@ section{padding:120px 0 0}
 @media (max-width:980px){.behave{grid-template-columns:1fr}.receipt{position:relative;top:0;max-width:440px}}
 @media (max-width:620px){.notes{grid-template-columns:1fr}.note:nth-child(2),.note:nth-child(4){margin-top:0}}
 
+/* pull for luck */
+.pull{display:grid;grid-template-columns:1fr 1fr;gap:28px;align-items:stretch}
+.pstage{position:relative;min-height:470px;background:var(--card);border:1px solid var(--rule);overflow:hidden}
+.pstage .cord{position:absolute;left:0;right:0;top:0}
+.pstage .lbl{position:absolute;left:18px;bottom:16px;color:var(--muted)}
+.pc{position:absolute;left:50%;top:7px;width:120px;margin-left:-60px;display:flex;flex-direction:column;align-items:center}
+/* the rope stretches from the cord, so the charm stays attached */
+.pc .rope{width:2px;height:120px;background:linear-gradient(var(--thread),var(--thread2));animation:pc-len 7s cubic-bezier(.45,.05,.3,1) infinite}
+.pc .body{position:relative;width:104px;height:104px;margin-top:-6px}
+.pc .body img{width:104px;height:104px;object-fit:contain;filter:drop-shadow(0 14px 14px rgba(60,40,10,.3))}
+.pc .ring{position:absolute;left:-14px;top:-14px;width:132px;height:132px;transform:rotate(-90deg)}
+.pc .ring circle{fill:none;stroke:var(--thread);stroke-width:4;stroke-linecap:round;stroke-dasharray:377;stroke-dashoffset:377;animation:pc-ring 7s linear infinite}
+.pc .hand{position:absolute;left:50%;top:44px;width:40px;height:48px;margin-left:4px;color:var(--ink);animation:pc-hand 7s cubic-bezier(.45,.05,.3,1) infinite}
+.pill{position:absolute;left:calc(50% + 80px);top:132px;display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:999px;background:var(--ink);color:var(--paper);font-weight:600;font-size:14.5px;white-space:nowrap;opacity:0;animation:pc-pill 7s linear infinite}
+.pill i{width:8px;height:8px;border-radius:50%;background:var(--marigold)}
+.ptoast{position:absolute;left:50%;bottom:52px;transform:translateX(-50%);padding:9px 16px;border-radius:12px;background:#fff;border:1px solid var(--rule);box-shadow:0 12px 24px -14px rgba(60,40,10,.5);font-size:14.5px;white-space:nowrap;opacity:0;animation:pc-toast 7s linear infinite}
+.ptoast b{color:var(--leaf)}
+@keyframes pc-len{0%,14%{height:120px}34%,58%{height:238px}64%{height:106px}70%{height:126px}76%,100%{height:120px}}
+@keyframes pc-ring{0%,34%{stroke-dashoffset:377;opacity:1}46%,58%{stroke-dashoffset:0;opacity:1}62%,100%{stroke-dashoffset:0;opacity:0}}
+@keyframes pc-hand{0%,6%{opacity:0;transform:translateY(-10px)}12%,58%{opacity:1;transform:translateY(0)}64%,100%{opacity:0;transform:translateY(-16px)}}
+@keyframes pc-pill{0%,44%{opacity:0;transform:translateY(118px) translateX(-6px)}48%,58%{opacity:1;transform:translateY(118px)}62%,100%{opacity:0;transform:translateY(118px)}}
+@keyframes pc-toast{0%,60%{opacity:0;transform:translate(-50%,8px)}64%,88%{opacity:1;transform:translate(-50%,0)}94%,100%{opacity:0;transform:translate(-50%,0)}}
+.does{display:grid;gap:18px;align-content:start}
+.does ul{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.does li{display:flex;align-items:center;gap:12px;padding:14px 16px;background:var(--card);border:1px solid var(--rule)}
+.does li svg{width:22px;height:22px;flex:none;color:var(--red)}
+.does li b{display:block;font-weight:600}
+.does li span{display:block;font-size:14px;color:var(--muted)}
+.long{padding:18px 20px;border-left:3px solid var(--thread);background:var(--card)}
+.long b{font:500 20px/1.2 var(--serif);display:block;margin-bottom:4px}
+.long p,.safe p{margin:0;color:var(--ink2);font-size:15.5px}
+.safe{display:flex;gap:14px;padding:18px 20px;background:rgba(47,106,59,.08);border:1px solid rgba(47,106,59,.25)}
+.safe svg{width:22px;height:22px;flex:none;color:var(--leaf);margin-top:2px}
+.safe b{color:var(--ink)}
+@media (max-width:900px){.pull{grid-template-columns:1fr}.pstage{min-height:430px}}
+@media (max-width:520px){.does ul{grid-template-columns:1fr}.pill{left:auto;right:10px}}
+@media (prefers-reduced-motion:reduce){.pc .rope,.pc .ring circle,.pc .hand,.pill,.ptoast{animation:none}.pill{opacity:1}}
+
+/* the app */
+.apptabs{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin-bottom:20px}
+.apptabs button{height:36px;padding:0 15px;border-radius:999px;border:1px solid var(--rule2);background:transparent;font-family:var(--mono);font-size:12px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.apptabs button:hover{border-color:var(--ink);color:var(--ink)}
+.apptabs button[aria-pressed="true"]{background:var(--ink);border-color:var(--ink);color:var(--paper)}
+.apptabs .theme{margin-left:auto}
+.appwin{border-radius:12px;overflow:hidden;border:1px solid var(--rule2);background:#f3ecdf;box-shadow:0 40px 80px -40px rgba(60,40,10,.6)}
+.appwin .bar{display:flex;align-items:center;height:34px;padding-left:14px;background:var(--paper2);border-bottom:1px solid var(--rule);font-size:13px;color:var(--ink2)}
+.appwin .bar span{flex:1}
+.appwin .bar i{width:46px;height:34px;display:grid;place-items:center;font-style:normal;color:var(--ink2)}
+.appwin.dark{background:#141210;border-color:#2b2620}
+.appwin.dark .bar{background:#1b1814;border-color:#2b2620;color:#cfc5b3}
+.appwin.dark .bar i{color:#cfc5b3}
+.appwin img{width:100%;height:auto;aspect-ratio:16/10;display:block}
+.appcap{margin:14px 0 0;color:var(--muted)}
+.keys{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:34px}
+.key{background:var(--card);border:1px solid var(--rule);padding:18px 20px}
+.key .kk{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+kbd{font-family:var(--mono);font-size:12.5px;padding:4px 9px;border:1px solid var(--rule2);border-bottom-width:3px;border-radius:7px;background:#fffdf8;color:var(--ink)}
+.key p{margin:0;color:var(--ink2);font-size:15.5px}
+@media (max-width:860px){.keys{grid-template-columns:1fr}}
+
 /* make it yours */
 .yours{display:grid;grid-template-columns:1.3fr 1fr;gap:28px}
 .sample{position:relative;background:var(--card);border:1px solid var(--rule);min-height:460px;overflow:hidden}
@@ -258,13 +318,21 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <symbol id="i-win" viewBox="0 0 24 24"><path fill="currentColor" d="M3 5.1 10.4 4v7.2H3zm8.3-1.2L21 2.5v8.7h-9.7zM3 12.8h7.4V20L3 18.9zm8.3 0H21v8.7l-9.7-1.4z"/></symbol>
   <symbol id="i-down" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 4v14M6 12l6 6 6-6M5 21h14"/></symbol>
   <symbol id="i-curl" viewBox="0 0 34 20"><path fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" d="M32 14C24 18 14 17 10 10 7 5 11 1 14 4c3 3-2 9-11 9M3 13l4-4M3 13l5 3"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></g></symbol>
+  <symbol id="i-app" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M7 6.5h.01M10 6.5h.01"/></g></symbol>
+  <symbol id="i-file" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M6 3h8l4 4v14H6zM14 3v4h4M9 13h6M9 17h6"/></symbol>
+  <symbol id="i-folder" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M3 6.5A1.5 1.5 0 0 1 4.5 5H9l2 2.5h8.5A1.5 1.5 0 0 1 21 9v9.5a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 18.5z"/></symbol>
+  <symbol id="i-copy" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M16 8V5.5A1.5 1.5 0 0 0 14.5 4h-9A1.5 1.5 0 0 0 4 5.5v9A1.5 1.5 0 0 0 5.5 16H8"/></g></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24"><g fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"><path d="M3 12s3.5-6 9-6 9 6 9 6-3.5 6-9 6-9-6-9-6z"/><circle cx="12" cy="12" r="2.5"/><path d="M4 20 20 4"/></g></symbol>
+  <symbol id="i-shield" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" d="M12 3 4 6v6c0 5 3.5 8 8 9 4.5-1 8-4 8-9V6zM8.5 12l2.5 2.5 4.5-5"/></symbol>
+  <symbol id="i-pull" viewBox="0 0 40 48"><path fill="#fbf6ec" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" d="M14 20V8a3 3 0 0 1 6 0v10m0-3a3 3 0 0 1 6 0v3m0 0a3 3 0 0 1 6 0v8c0 8-5 13-12 13h-2c-5 0-8-3-10-7l-4-8a3 3 0 0 1 5-3l3 5"/></symbol>
   <symbol id="heart" viewBox="0 0 64 64"><defs><radialGradient id="hg" cx=".35" cy=".3"><stop offset="0" stop-color="#ff9b88"/><stop offset=".6" stop-color="#d9412b"/><stop offset="1" stop-color="#8e2213"/></radialGradient></defs><path fill="url(#hg)" d="M32 58S5 41 5 22a12.5 12.5 0 0 1 27-6.5A12.5 12.5 0 0 1 59 22c0 19-27 36-27 36z"/><path fill="#fff" opacity=".45" d="M15 17a7 7 0 0 1 9-4c-5 1-7 5-7 9z"/></symbol>
 </svg>
 
 <nav class="nav" id="nav">
   <div class="wrap">
     <a class="mark" href="#top" aria-label="Charm Line home"><svg><use href="#knot"/></svg>Charm Line</a>
-    <div class="links mono"><a href="#catalogue">Catalogue</a><a href="#behaves">How it behaves</a><a href="#yours">Make it yours</a><a href="#home">Download</a></div>
+    <div class="links mono"><a href="#catalogue">Catalogue</a><a href="#pull">Pull for luck</a><a href="#app">The app</a><a href="#home">Download</a></div>
     <a class="tag sm ink" href="#home">Get it free</a>
   </div>
 </nav>
@@ -289,7 +357,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
 
     <div class="wrap hero-copy">
       <div>
-        <p class="kicker mono"><b>New</b><span>Charm Line 1.0</span><span data-count-line>57 charms · 10 collections</span></p>
+        <p class="kicker mono"><b>New</b><span>Charm Line 1.2 · pull actions</span><span data-count-line>57 charms · 10 collections</span></p>
         <h1>Little luck,<br><span class="u"><i>on a line.</i><svg viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true"><path d="M4 8 Q200 44 396 8" fill="none" stroke="#b8862f" stroke-width="5" stroke-linecap="round"/><path d="M4 8 Q200 44 396 8" fill="none" stroke="#e0b96c" stroke-width="5" stroke-linecap="round" stroke-dasharray="3 7"/></svg></span></h1>
       </div>
       <div class="hero-side">
@@ -323,7 +391,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
         <div class="notes">
           <div class="note rv"><img src="/demo/charms/bell.webp" alt="" loading="lazy"><h3>It has weight.</h3><p>Flick a charm and it swings, bumps its neighbours and slowly settles, like a real charm on a real thread. Bells even ring.</p></div>
           <div class="note rv"><img src="/demo/charms/rubberduck.webp" alt="" loading="lazy"><h3>It stays out of the way.</h3><p>Clicks pass straight through to your apps. Only the charms listen to your mouse, and only when you reach for them.</p></div>
-          <div class="note rv"><img src="/demo/charms/lotus.webp" alt="" loading="lazy"><h3>It rests when you do.</h3><p>Charm Line only draws while something is moving. A still desktop costs almost nothing, and it works fully offline.</p></div>
+          <div class="note rv"><img src="/demo/charms/lotus.webp" alt="" loading="lazy"><h3>It knows when to step aside.</h3><p>It hides itself when a game, video or slideshow goes fullscreen, and stays out of screen shares and recordings. A still desktop costs almost nothing.</p></div>
           <div class="note rv"><img src="/demo/charms/kitsune.webp" alt="" loading="lazy"><h3>It lives in the tray.</h3><p>Open Charm Line from the tray or with Ctrl+Alt+Shift+H. Press Ctrl+Alt+Shift+C to hide the charms for a call, and again to bring them back.</p></div>
         </div>
         <div class="receipt rv" aria-label="What you get">
@@ -336,6 +404,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
             <div class="r"><dt>Your own images</dt><dd>unlimited</dd></div>
             <div class="r"><dt>Account needed</dt><dd>none</dd></div>
             <div class="r"><dt>Internet needed</dt><dd>none</dd></div>
+            <div class="r"><dt>Pull actions</dt><dd>2 per charm</dd></div>
             <div class="r"><dt>Luck</dt><dd>plenty</dd></div>
           </dl>
           <hr>
@@ -347,10 +416,70 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
     </div>
   </section>
 
+  <section id="pull">
+    <div class="wrap">
+      <div class="sec-h rv">
+        <span class="no mono">Line 03 · Pull for luck</span>
+        <div><h2>Give it a tug. <i>Something happens.</i></h2><p>New in Charm Line 1.2. Pull a charm straight down, wait for the ring to fill, and let go. It opens a website, an app, a file or a folder, copies some text, or hides the charms. A normal swing still just swings.</p></div>
+      </div>
+      <div class="pull">
+        <div class="pstage rv" role="img" aria-label="Animation: a hand pulls the nazar charm down, a gold ring fills, a label reads Open Spotify, and on release a message says Opening Spotify.">
+          <div class="cord" aria-hidden="true"></div>
+          <div class="pc" aria-hidden="true">
+            <div class="rope"></div>
+            <div class="body"><svg class="ring" viewBox="0 0 132 132"><circle cx="66" cy="66" r="60"/></svg><img src="/demo/charms/nazar.webp" alt=""><svg class="hand"><use href="#i-pull"/></svg></div>
+          </div>
+          <div class="pill" aria-hidden="true"><i></i>Open Spotify</div>
+          <div class="ptoast" aria-hidden="true"><b>✓</b> Opening Spotify…</div>
+          <span class="lbl mono">Pull · hold · let go</span>
+        </div>
+        <div class="does">
+          <ul class="rv">
+            <li><svg><use href="#i-globe"/></svg><div><b>A website</b><span>Your playlist, your inbox</span></div></li>
+            <li><svg><use href="#i-app"/></svg><div><b>An app</b><span>Spotify, Notes, a game</span></div></li>
+            <li><svg><use href="#i-file"/></svg><div><b>A file</b><span>Today's to-do list</span></div></li>
+            <li><svg><use href="#i-folder"/></svg><div><b>A folder</b><span>Where your projects live</span></div></li>
+            <li><svg><use href="#i-copy"/></svg><div><b>Copy text</b><span>An address, a sign-off</span></div></li>
+            <li><svg><use href="#i-eye"/></svg><div><b>Hide the charms</b><span>Clear the screen in one tug</span></div></li>
+          </ul>
+          <div class="long rv"><b>Hold a little longer</b><p>Keep holding after the ring fills and it fills again. That long pull runs a second action, so one charm can do two things.</p></div>
+          <div class="safe rv"><svg><use href="#i-shield"/></svg><p><b>Only on purpose.</b> Only charms you give an action can be pulled. Swings, flicks and bumps never count. The first time a charm opens something, Charm Line asks you, and it never runs scripts.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="app">
+    <div class="wrap">
+      <div class="sec-h rv">
+        <span class="no mono">Line 04 · The app</span>
+        <div><h2>Everything, <i>in one window.</i></h2><p>Charm Line 1.2 is a proper desktop app. Hang charms from the catalogue, set up your pulls, change the rope and caps, then close the window. Your charms stay on the screen.</p></div>
+      </div>
+      <div class="apptabs rv" role="toolbar" aria-label="Pages of the app">
+        <button data-shot="line" aria-pressed="true">My line</button>
+        <button data-shot="catalogue" aria-pressed="false">Catalogue</button>
+        <button data-shot="style" aria-pressed="false">Style</button>
+        <button data-shot="pulls" aria-pressed="false">Pull actions</button>
+        <button data-shot="settings" aria-pressed="false">Settings</button>
+        <button class="theme" id="shotTheme" aria-pressed="false">Dark</button>
+      </div>
+      <div class="appwin rv" id="appwin">
+        <div class="bar" aria-hidden="true"><span>Charm Line</span><i>–</i><i>□</i><i>✕</i></div>
+        <img id="shot" src="/assets/app/line-light.webp" width="1280" height="800" alt="Charm Line, My line page" loading="lazy">
+      </div>
+      <p class="appcap mono" id="shotCap">My line · every charm on your screen, and what each one does</p>
+      <div class="keys">
+        <div class="key rv"><div class="kk"><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>H</kbd></div><p>Open Charm Line from anywhere.</p></div>
+        <div class="key rv"><div class="kk"><kbd>Ctrl</kbd><kbd>Alt</kbd><kbd>Shift</kbd><kbd>C</kbd></div><p>Hide or show the charms, without opening anything.</p></div>
+        <div class="key rv"><div class="kk"><kbd>Double-click</kbd></div><p>Double-click a charm to jump straight to it in the app.</p></div>
+      </div>
+    </div>
+  </section>
+
   <section id="yours">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">Line 03 · Make it yours</span>
+        <span class="no mono">Line 05 · Make it yours</span>
         <div><h2>Your line. <i>Your luck.</i></h2><p>Pick the thread, pick the cap, or hang something only you have.</p></div>
       </div>
       <div class="yours">
@@ -396,7 +525,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="home">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">Line 04 · Take one home</span>
+        <span class="no mono">Line 06 · Take one home</span>
         <div><h2>Take a little luck <i>home.</i></h2><p>Free for every desktop. No account, no sign-up, nothing to pay. It installs in seconds and sits quietly in your system tray.</p></div>
       </div>
       <div class="home rv">
@@ -415,7 +544,7 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
   <section id="counter">
     <div class="wrap">
       <div class="sec-h rv">
-        <span class="no mono">Line 05 · At the counter</span>
+        <span class="no mono">Line 07 · At the counter</span>
         <div><h2>Before you hang <i>your luck.</i></h2></div>
       </div>
       <div class="qa">
@@ -423,10 +552,13 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
         <div class="q rv"><span class="n mono">Q.02</span><h3>Will it block my clicks?</h3><p>No. Clicks pass through to the windows underneath. Only the charms respond, and only when you grab them.</p></div>
         <div class="q rv"><span class="n mono">Q.03</span><h3>Will it slow my computer down?</h3><p>Barely. It only draws while a charm is moving. Once they settle, it goes quiet until you touch one again.</p></div>
         <div class="q rv"><span class="n mono">Q.04</span><h3>Can I use my own picture?</h3><p>Yes. In Charm Line, open “Your images” and drop a picture in. Pictures with a transparent background look best.</p></div>
-        <div class="q rv"><span class="n mono">Q.05</span><h3>How do I hide the charms or quit?</h3><p>Right-click the Charm Line icon in your system tray. From there you can hide them, turn on start at login, or quit.</p></div>
-        <div class="q rv"><span class="n mono">Q.06</span><h3>Does it collect any data?</h3><p>No. It works fully offline. Your charms, settings and pictures stay on your computer.</p></div>
-        <div class="q rv"><span class="n mono">Q.07</span><h3>Can it start with Windows?</h3><p>Yes. Right-click the tray icon and tick “Start at login”.</p></div>
-        <div class="q rv"><span class="n mono">Q.08</span><h3>How do I uninstall it?</h3><p>Windows Settings → Apps → Installed apps → Charm Line → Uninstall. On a Mac, drag it from Applications to the Bin.</p></div>
+        <div class="q rv"><span class="n mono">Q.05</span><h3>Can a swing open something by accident?</h3><p>No. Only charms you give an action can be pulled, and only a straight pull down that you hold until the ring fills counts. Swings, flicks and bumps never do.</p></div>
+        <div class="q rv"><span class="n mono">Q.06</span><h3>Will my charms show up on a video call?</h3><p>No. Charm Line keeps them out of screen sharing and recordings, and tucks them away while a game or video is fullscreen. You can change both in Settings.</p></div>
+        <div class="q rv"><span class="n mono">Q.07</span><h3>Can the charms stay on my desktop only?</h3><p>Yes, on Windows. In Settings, choose Desktop only. The charms sit behind your windows and come forward when you show the desktop.</p></div>
+        <div class="q rv"><span class="n mono">Q.08</span><h3>How do I hide the charms or quit?</h3><p>Press Ctrl+Alt+Shift+C to hide or show them. To quit, right-click the Charm Line icon in your system tray.</p></div>
+        <div class="q rv"><span class="n mono">Q.09</span><h3>Does it collect any data?</h3><p>No. It works fully offline. Your charms, settings and pictures stay on your computer.</p></div>
+        <div class="q rv"><span class="n mono">Q.10</span><h3>Can it start with Windows?</h3><p>Yes. Charm Line asks the first time you open it, and you can change it any time in Settings.</p></div>
+        <div class="q rv"><span class="n mono">Q.11</span><h3>How do I uninstall it?</h3><p>Windows Settings → Apps → Installed apps → Charm Line → Uninstall. On a Mac, drag it from Applications to the Bin.</p></div>
       </div>
     </div>
   </section>
@@ -488,6 +620,18 @@ footer{margin-top:140px;border-top:1px solid var(--rule2);padding-bottom:40px}
     $$('#beads .bead').forEach(x => x.setAttribute('aria-pressed', x === b));
     const v = b.dataset.cap; tell(sample, v === 'signature' ? { type: 'cap', design: 'signature' } : { type: 'cap', design: 'beads', finish: v });
   }));
+
+  // The app section: switch screenshots by page and theme.
+  const CAPS = { line: 'My line · every charm on your screen, and what each one does', catalogue: 'Catalogue · all the charms, by collection, one click to hang', style: 'Style · rope, caps, size and sound, live on your screen', pulls: 'Pull actions · every charm that does something, in one place', settings: 'Settings · shortcuts, where charms appear, and when they hide' };
+  let shotPage = 'line', shotDark = false;
+  const showShot = () => {
+    $('#shot').src = `/assets/app/${shotPage}-${shotDark ? 'dark' : 'light'}.webp`;
+    $('#shot').alt = 'Charm Line, ' + CAPS[shotPage].split(' · ')[0] + ' page';
+    $('#shotCap').textContent = CAPS[shotPage];
+    $('#appwin').classList.toggle('dark', shotDark);
+  };
+  $$('.apptabs [data-shot]').forEach(b => b.addEventListener('click', () => { shotPage = b.dataset.shot; $$('.apptabs [data-shot]').forEach(x => x.setAttribute('aria-pressed', x === b)); showShot(); }));
+  $('#shotTheme').addEventListener('click', e => { shotDark = !shotDark; e.currentTarget.setAttribute('aria-pressed', shotDark); e.currentTarget.textContent = shotDark ? 'Light' : 'Dark'; showShot(); });
 
   // Scrolling makes the charms sway a little, like a breeze through a doorway.
   let lastY = scrollY, raf = 0, heroVis = true, sampleVis = false;
